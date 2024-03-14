@@ -9,7 +9,8 @@
   "scripts": {
     "start": "tsc && node dist/app.js",
     "dev": "tsc-watch --onSuccess \"node dist/app.js\"",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "jest --watchAll --no-cache"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +20,11 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
     "@types/node": "^20.11.27",
+    "@types/supertest": "^6.0.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4",
     "tsc-watch": "^6.0.4",
     "typescript": "^5.4.2"
   }
