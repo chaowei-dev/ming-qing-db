@@ -1,9 +1,40 @@
 # ming-qing-db
 
+# Function
+
+- Show list
+  - Pagination
+  - Init is searching ""
+  - Search multiple keyword ("a"+"b"+"c")
+  - Advanced searching (multi-column)
+  - Download searching results
+- Sign up
+- Login
+  - Add
+  - Update
+  - Remove
+  - Import
+
+# Database Structure
+
+- Book
+  | book_id | title | author | version | source | remarks | created_by | updated_by |
+  | ------- | ----- | ------ | ------- | ------ | ------- | ---------- | ---------- |
+
+- Roll
+  | roll_id | roll | roll_name | created_by | updated_by | book_id |
+  | ------- | ---- | --------- | ---------- | ---------- | ------- |
+
+- Entry
+  | entry_id | entry | remarks | created_by | updated_by | roll_id |
+  | -------- | ----- | ------- | ---------- | ---------- | ------- |
+
 # Project Structure
+
 - node version: 20
+
 ```
-my-project/
+ming-qing-db/
 │
 ├── backend/              # Backend directory
 │   ├── src/              # Source code for the backend
