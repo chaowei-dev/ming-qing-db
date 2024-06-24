@@ -1,21 +1,24 @@
-// backend/src/app.ts
 import express from 'express';
-import itemRoutes from './routes/itemRoutes';
+import passport from 'passport';
+import authRoutes from './routes/authRoutes';
+import bookRoutes from './routes/bookRoutes';
+import './passportConfig';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-app.get('/', (req, res) => {
-    res.send('Hello from the backend!');
-});
+app.use(passport.initialize());
 
-// Use item routes
-app.use('/api/items', itemRoutes);
+// Use Routes
+app.use('/auth', authRoutes);
+app.use('/books', bookRoutes);
 
-export default app;
-
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
