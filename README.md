@@ -8,6 +8,9 @@
   - Search multiple keyword ("a"+"b"+"c")
   - Advanced searching (multi-column)
   - Download searching results
+- Add book
+- Add entry
+  - Need roll, roll_name, book
 - Sign up
 - Login
   - Add
