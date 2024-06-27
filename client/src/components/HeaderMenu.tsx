@@ -24,6 +24,7 @@ const HeaderMenu: React.FC = () => {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             {userRole && <Nav.Link href="/book/list/30/1">書目列表</Nav.Link>}
+            {userRole && <Nav.Link href="/entry/list/30/1">篇名列表</Nav.Link>}
             {userRole === 'ADMIN' && (
               <Nav.Link href="/book/add">新增書目</Nav.Link>
             )}

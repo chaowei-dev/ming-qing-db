@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { countBooks, fetchBookList } from '../../services/bookService';
-import { Col, Container, Row, Table } from 'react-bootstrap';
+import { Button, Col, Container, Row, Table } from 'react-bootstrap';
 import CustomPagination from '../CustomPagination';
+import BookDetail from './BookDetail';
 
 interface Book {
   id: number;
@@ -26,6 +27,8 @@ const BookList = () => {
   const [bookList, setBookList] = useState<Book[]>([]);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalBooks, setTotalBooks] = useState<number>(0);
+  // const [showDetailModal, setShowDetailModal] = useState(false);
+  // const [selectedBook, setSelectedBook] = useState<Book | null>(null);
 
   // Convert string parameters to numbers with default values
   const pageSize = parseInt(params.pageSize ?? '10');
@@ -67,6 +70,21 @@ const BookList = () => {
     />
   );
 
+  const handleBookDetails = (book: Book) => {
+    // Use book id to redirect to book detail page
+    window.location.href = `/book/detail/${book.id}`;
+  };
+
+  // MODAL:
+  // Show detail modal
+  // const handleShowModal = (book: Book) => {
+  //   setSelectedBook(book);
+  //   setShowDetailModal(true);
+  // };
+
+  // Close detail modal
+  // const handleCloseModal = () => setShowDetailModal(false);
+
   // Create serial number
   let serialNum = (pageNum - 1) * pageSize + 1;
 
@@ -95,7 +113,14 @@ const BookList = () => {
               {bookList.map((book) => (
                 <tr key={book.id}>
                   <td>{serialNum++}</td>
-                  <td>{book.title}</td>
+                  <td>
+                    <Button
+                      variant="link"
+                      onClick={() => handleBookDetails(book)}
+                    >
+                      {book.title}
+                    </Button>
+                  </td>
                   <td>{book.author}</td>
                   <td>{book.version}</td>
                   <td>{book.source}</td>
@@ -108,6 +133,13 @@ const BookList = () => {
       <Row className="mt-4">
         <Col>{paginationComponent}</Col>
       </Row>
+      {/* {selectedBook && (
+        <BookDetail
+          showDetailModal={showDetailModal}
+          selectedBook={selectedBook}
+          handleCloseModal={handleCloseModal}
+        />
+      )} */}
     </Container>
   );
 };

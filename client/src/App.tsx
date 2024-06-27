@@ -9,6 +9,8 @@ import HeaderMenu from './components/HeaderMenu';
 import BookList from './components/books/BookList';
 import BookEdit from './components/books/BookEdit';
 import BookAdd from './components/books/BookAdd';
+import EntryList from './components/books/EntryList';
+import BookDetail from './components/books/BookDetail';
 
 function App() {
   return (
@@ -28,6 +30,23 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/book/detail/:id"
+            element={
+              <PrivateRoute allowedRoles={['USER', 'ADMIN']}>
+                <BookDetail />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/entry/list/:pageSize/:pageNum/:keyword?"
+            element={
+              <PrivateRoute allowedRoles={['USER', 'ADMIN']}>
+                <EntryList />
+              </PrivateRoute>
+            }
+          />
+
           <Route
             path="/book/add"
             element={

@@ -33,6 +33,20 @@ export const fetchBookById = async (id: string) => {
   }
 };
 
+export const getBookDetailsById = async (id: string) => {
+  try {
+    const response = await axios.get(`/books/details/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Fetch book details failed:', error);
+    throw error;
+  }
+};
+
 export const addBook = async (book: any) => {
   try {
     const response = await axios.post('/books', book, {
