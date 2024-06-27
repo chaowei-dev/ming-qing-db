@@ -2,7 +2,7 @@ import axios from './axiosConfig';
 
 export const login = async (email: string, password: string) => {
     try {
-        const response = await axios.post('/login', { email, password });
+        const response = await axios.post('/auth/login', { email, password });
         // Assuming the token is in response.data
         const { token } = response.data;
 
@@ -28,7 +28,7 @@ export const login = async (email: string, password: string) => {
 
 export const signup = async (email: string, password: string) => {
     try {
-        const response = await axios.post('/register', { email, password });
+        const response = await axios.post('/auth/register', { email, password });
         return response.data;
     } catch (error) {
         console.error('Signup failed:', error);

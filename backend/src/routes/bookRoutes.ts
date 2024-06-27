@@ -11,7 +11,7 @@ import { isAdmin } from "../middleware/roleMiddleware";
 
 const router = express.Router();
 
-router.get("/", isAuthenticated, getBooks);
+router.get("/list/:size/:page/:keyword", isAuthenticated, getBooks);
 router.get("/:id", isAuthenticated, getBookById);
 
 // Only Admins can add, update and delete books

@@ -1,14 +1,31 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// /list/:size/:page/:keyword
 export const getBooks = async (req: Request, res: Response) => {
+  const { size, page, keyword } = req.params;
+
+  const intSize = parseInt(size);
+  const intPage = parseInt(page);
+  const offset = intSize * (intPage - 1);
+
+  // log
+  console.log(`size: ${size}, page: ${page}, keyword: ${keyword}`);
+
   try {
-    const books = await prisma.book.findMany();
+    const books = await prisma.book.findMany({
+      skip: offset,
+      take: intSize,
+      // where: {
+      //   OR: [{ title: { contains: keyword } }],
+      // },
+    });
+
     res.json(books);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -19,11 +36,11 @@ export const getBookById = async (req: Request, res: Response) => {
       where: { id: Number(id) },
     });
     if (!book) {
-      return res.status(404).json({ message: "Book not found" });
+      return res.status(404).json({ message: 'Book not found' });
     }
     res.json(book);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -40,7 +57,7 @@ export const addBook = async (req: Request, res: Response) => {
     });
     res.status(201).json(newBook);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -54,7 +71,7 @@ export const updateBook = async (req: Request, res: Response) => {
     });
     res.json(updatedBook);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -64,8 +81,8 @@ export const deleteBook = async (req: Request, res: Response) => {
     await prisma.book.delete({
       where: { id: Number(id) },
     });
-    res.json({ message: "Book deleted" });
+    res.json({ message: 'Book deleted' });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
