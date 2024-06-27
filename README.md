@@ -63,3 +63,10 @@ ming-qing-db/
     ├── tsconfig.json     # TypeScript configuration for the frontend
     └── README.md         # Frontend-specific documentation
 ```
+
+# .env
+
+- backend
+  - `DATABASE_URL=postgresql://user:pass@localhost:5432/dbname`
+  - `JWT_SECRET=your_jwt_secret`
+- frontend

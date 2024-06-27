@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
-import passport from 'passport';
+import { Request, Response, NextFunction } from "express";
+import passport from "passport";
 
-export const isAuthenticated = passport.authenticate('jwt', { session: false });
+export const isAuthenticated = passport.authenticate("jwt", { session: false });
