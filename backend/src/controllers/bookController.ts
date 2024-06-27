@@ -44,6 +44,17 @@ export const getBookById = async (req: Request, res: Response) => {
   }
 };
 
+export const getBookCount = async (req: Request, res: Response) => {
+  const { keyword } = req.params;
+
+  try {
+    const count = await prisma.book.count();
+    res.json(count);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 export const addBook = async (req: Request, res: Response) => {
   const { title, author, version, source } = req.body;
   try {

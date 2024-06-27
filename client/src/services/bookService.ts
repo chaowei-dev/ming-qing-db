@@ -21,7 +21,11 @@ export const fetchBookList = async (
 
 export const fetchBookById = async (id: string) => {
   try {
-    const response = await axios.get(`/books/${id}`);
+    const response = await axios.get(`/books/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Fetch book failed:', error);
@@ -31,7 +35,11 @@ export const fetchBookById = async (id: string) => {
 
 export const addBook = async (book: any) => {
   try {
-    const response = await axios.post('/books', book);
+    const response = await axios.post('/books', book, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Add book failed:', error);
@@ -41,7 +49,11 @@ export const addBook = async (book: any) => {
 
 export const updateBook = async (id: string, book: any) => {
   try {
-    const response = await axios.put(`/books/${id}`, book);
+    const response = await axios.put(`/books/${id}`, book, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Update book failed:', error);
@@ -51,7 +63,11 @@ export const updateBook = async (id: string, book: any) => {
 
 export const deleteBook = async (id: string) => {
   try {
-    const response = await axios.delete(`/books/${id}`);
+    const response = await axios.delete(`/books/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Delete book failed:', error);
@@ -59,9 +75,13 @@ export const deleteBook = async (id: string) => {
   }
 };
 
-export const countBooks = async () => {
+export const countBooks = async (keyword: string) => {
   try {
-    const response = await axios.get('/books/count');
+    const response = await axios.get(`/books/count/${keyword}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Count books failed:', error);

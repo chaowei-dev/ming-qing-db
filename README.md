@@ -1,5 +1,17 @@
 # ming-qing-db
 
+# to do
+
+[x] Book list
+[x] Pagination of book list
+[ ] Entry list
+[ ] Pagination of entry list
+[ ] Add book
+[ ] Edit book
+[ ] Search books
+[ ] Search entires
+[ ] Book detail (roll, roll_name, entry)
+
 # Function
 
 - Show list
