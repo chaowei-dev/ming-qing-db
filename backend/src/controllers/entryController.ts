@@ -117,7 +117,7 @@ export const getEntries = async (
     });
 
     // Flatten the results to match your desired output format
-    const flatResults: Entry[] = entries.map((entry) => ({
+    const flatResults: Entry[] = entries.map((entry: any) => ({
       id: entry.id,
       entry_name: entry.entry_name,
       roll: entry.roll.roll,
@@ -234,8 +234,8 @@ export const getBookWithDetails = async (
 
     // Flattening the result to match your desired output format
     const flatResults: ReusltOfBookDetails[] = [];
-    bookDetails.rolls.forEach((roll) => {
-      roll.entries.forEach((entry) => {
+    bookDetails.rolls.forEach((roll: any) => {
+      roll.entries.forEach((entry: any) => {
         flatResults.push({
           title: bookDetails.title,
           book_id: bookDetails.id,
