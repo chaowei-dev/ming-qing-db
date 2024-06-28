@@ -7,14 +7,14 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const userData = await login(email, password);
       if (userData.token) {
-        navigate('/'); // Navigate to dashboard or wherever appropriate
+        // reload the page to '/book/list/30/1'
+        window.location.href = '/book/list/30/1';
       }
     } catch (err: any) {
       setError(err.message || 'Login failed, please try again.');

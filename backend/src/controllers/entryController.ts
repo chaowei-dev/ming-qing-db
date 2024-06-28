@@ -13,6 +13,35 @@ interface ReusltOfBookDetails {
   roll_name: string;
 }
 
+// Get all entries
+export const getEntries = async (req: Request, res: Response): Promise<void> => {
+  console.log('Get all entries');
+
+  try {
+    const entries = await prisma.entry.findMany();
+    res.json(entries);
+  } catch (error) {
+    console.error('Error fetching entries:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+// Count entries
+export const countEntries = async (req: Request, res: Response): Promise<void> => {
+  const keyword = req.params.keyword;
+
+  console.log(`Count entries with keyword: ${keyword}`);
+
+  try {
+    const entriesCount = await prisma.entry.count();
+
+    res.json(entriesCount);
+  } catch (error) {
+    console.error('Error counting entries:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
 // Get entries list by roll id and get roll list by book id
 export const getBookWithDetails = async (
   req: Request,

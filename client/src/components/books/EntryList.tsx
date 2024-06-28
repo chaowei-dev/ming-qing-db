@@ -1,7 +1,110 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { countEntries, fetchEntryList } from '../../services/entryService';
+import CustomPagination from '../CustomPagination';
+import { Container, Row, Col, Table } from 'react-bootstrap';
+
+interface Entry {
+  id: number;
+  entry_name: string;
+  rollId: number;
+  createBy: string;
+  updateBy: string;
+}
 
 const EntryList = () => {
-  return <div>EntryList</div>;
+  // Get params from URL
+  const params = useParams<{
+    pageSize?: string;
+    pageNum?: string;
+    keyword?: string;
+  }>();
+
+  // Use state
+  const [entryList, setEntryList] = useState<Entry[]>([]);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalEntries, setTotalEntries] = useState<number>(0);
+
+  // Convert string parameters to numbers with default values
+  const pageSize = parseInt(params.pageSize ?? '10');
+  const pageNum = parseInt(params.pageNum ?? '1');
+  const keyword = params.keyword;
+
+  // Fetch entry list from server
+  const getEntryList = async () => {
+    const response = await fetchEntryList(pageSize, pageNum, keyword!);
+    setEntryList(response);
+  };
+
+  // Handle total pages
+  const handleTotalPages = async () => {
+    const response = await countEntries(keyword!);
+    const entriesCount = response;
+
+    setTotalEntries(entriesCount);
+    setTotalPages(Math.ceil(entriesCount / pageSize));
+  };
+
+  // Fetch entry list from server
+  useEffect(() => {
+    getEntryList();
+  }, [pageSize, pageNum, keyword]);
+
+  // Handle total pages
+  useEffect(() => {
+    handleTotalPages();
+  }, [pageSize, pageNum, keyword]);
+
+  // Create Pagination
+  const paginationComponent = (
+    <CustomPagination
+      totalPages={totalPages}
+      pageNum={pageNum}
+      pageSize={pageSize}
+      keyword={keyword}
+    />
+  );
+
+  // Create serial number
+  let serialNum = (pageNum - 1) * pageSize + 1;
+
+  return (
+    <Container>
+      <Row className="mt-4">
+        <Col>Search</Col>
+        <Col className="d-flex justify-content-end">
+          {paginationComponent}
+          <p className="ml-3 mt-2">{totalEntries}筆</p>
+        </Col>
+      </Row>
+      <Row className="mt-4">
+        <Col>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Entry Name</th>
+                <th>Roll ID</th>
+                <th>Created By</th>
+                <th>Updated By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entryList.map((entry, index) => (
+                <tr key={entry.id}>
+                  <td>{serialNum + index}</td>
+                  <td>{entry.entry_name}</td>
+                  <td>{entry.rollId}</td>
+                  <td>{entry.createBy}</td>
+                  <td>{entry.updateBy}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Col>
+      </Row>
+    </Container>
+  );
 };
 
 export default EntryList;
