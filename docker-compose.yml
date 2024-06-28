@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    expose:
+      - '3001'
+    networks:
+      - backend_network
+    restart: always
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.client
+    ports:
+      - '80:80'
+    depends_on:
+      - backend
+    networks:
+      - backend_network
+    restart: always
+
+networks:
+  backend_network:
+    external: true

@@ -26,9 +26,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(passport.initialize());
 
 // Use Routes
-app.use('/auth', authRoutes);
-app.use('/books', bookRoutes);
-app.use('/entries', entryRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/books', bookRoutes);
+app.use('/api/entries', entryRoutes);
 
 const PORT = process.env.PORT || 3030;
 app.listen(PORT, () => {
