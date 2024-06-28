@@ -30,7 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/entries', entryRoutes);
 
-const PORT = 3001;
-app.listen(PORT, () => {
+const PORT = 3001 || process.env.PORT;
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
