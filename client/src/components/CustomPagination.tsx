@@ -1,5 +1,6 @@
 import React from 'react';
 import { Form, Pagination } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 interface CustomPaginationProps {
   category: string;
@@ -19,9 +20,12 @@ const CustomPagination: React.FC<CustomPaginationProps> = ({
   const currentPage = Number(pageNum);
   const itemsPerPage = Number(pageSize);
 
+  // Handle page change
+  const navigate = useNavigate();
   const handlePageChange = (newPage: number) => {
     // Reload the page with the new page number
-    window.location.href = `/${category}/list/${itemsPerPage}/${newPage}/${keyword}`;
+    const url: string = `/${category}/list/${itemsPerPage}/${newPage}/${keyword}`;
+    navigate(url);
   };
 
   return (
@@ -44,7 +48,7 @@ const CustomPagination: React.FC<CustomPaginationProps> = ({
           value={currentPage}
           onChange={(e) => handlePageChange(Number(e.target.value))}
           className="text-center"
-          style={{ width: '60px' }}
+          style={{ width: '100px' }}
         />
         <span className="mx-1">/ {totalPages}</span>
       </div>

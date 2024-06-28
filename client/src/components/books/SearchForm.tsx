@@ -65,8 +65,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
               }
             />
           </InputGroup>
-        </Col>
-        <Col>
+
           <InputGroup size="sm">
             <InputGroup.Text>卷次</InputGroup.Text>
             <Form.Control
@@ -89,8 +88,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
               }
             />
           </InputGroup>
-        </Col>
-        <Col>
+
           <InputGroup size="sm">
             <InputGroup.Text>篇名</InputGroup.Text>
             <Form.Control
