@@ -1,6 +1,7 @@
 import { createReadStream } from 'fs';
 import { parse } from 'csv-parse';
 import { PrismaClient } from '@prisma/client';
+const cliProgress = require('cli-progress');
 
 const prisma = new PrismaClient();
 
@@ -104,7 +105,8 @@ const addEntry = async (entry_name: string, rollId: any) => {
 };
 
 // Step 1: read the csv file
-const csvFilePath = 'example.csv';
+// const csvFilePath = 'example.csv';
+const csvFilePath = 'Entries.csv';
 
 const parser = parse({
   columns: true, // Assumes the first row of the CSV are headers
@@ -114,6 +116,7 @@ const parser = parse({
 // Step 2: create the entry list with roll, roll_name, title, version, author
 const entryList: Entry[] = []; // List to hold the records
 
+console.log('Reading CSV file...');
 createReadStream(csvFilePath)
   .pipe(parser)
   .on('data', async (record: Entry) => {
@@ -121,9 +124,20 @@ createReadStream(csvFilePath)
   })
   .on('end', async () => {
     console.log('CSV file has been read and parsed:');
-    console.log(entryList); // Output the list of records
+    // console.log(entryList); // Output the list of records
 
     // Step 3: loop the list and insert the entry to the database
+    // create a new progress bar instance and use shades_classic theme
+    const bar1 = new cliProgress.SingleBar(
+      {},
+      cliProgress.Presets.shades_classic
+    );
+
+    // start the progress bar with a total value of 100 and start value of 0
+    bar1.start(entryList.length, 0);
+    let count = 0;
+
+    // Loop entryList
     for (const entry of entryList) {
       const {
         title,
@@ -143,8 +157,12 @@ createReadStream(csvFilePath)
       const newEntry = await addEntry(entryName, rollId);
 
       // Output the entry
-      console.log(`Added entry: ${newEntry}`);
+      // console.log(`Added entry: ${newEntry}`);
+      bar1.update(++count);
     }
+
+    // stop the progress bar
+    bar1.stop();
   })
   .on('error', async (error) => {
     console.error('Error reading CSV file:', error);
