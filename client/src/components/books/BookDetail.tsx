@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Col, Container, Table } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import { getBookDetailsById } from '../../services/bookService';
+import { Container, Table } from 'react-bootstrap';
 
-interface EntryOfBook {
+interface BookDetail {
   title: string;
   book_id: number;
   entry_id: number;
@@ -13,70 +13,54 @@ interface EntryOfBook {
   roll_name: string;
 }
 
-interface RouteParams {
-  id: string; // Ensure this matches the dynamic part of your route definition
-}
+const BookDetail = () => {
+  const params = useParams<{
+    id?: string;
+  }>();
 
-// FIXME: The page will flash then be blank when loading the book details
-const BookDetail: React.FC = () => {
-  // Get params with type safety
-  const { id } = useParams<RouteParams>();
-  const book_id = id || '';
+  const bookId = params.id;
 
-  // State for entries and loading status
-  const [entryOfBookList, setEntryOfBookList] = useState<EntryOfBook[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [bookDetailList, setBookDetailList] = useState<BookDetail[]>([]);
 
-  const getEntryByBookId = async (bookId: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await getBookDetailsById(bookId);
-      setEntryOfBookList(response.data);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error fetching book details:', error);
-      setError('Failed to fetch book details');
-      setIsLoading(false);
-    }
-  };
+  // Get book detail (roll, roll_name, entry) by book id from server
+  const getBookDetail = async () => {
+    const response = await getBookDetailsById(bookId!);
+    console.log(response);
+
+    setBookDetailList(response);
+  }
 
   useEffect(() => {
-    if (book_id) {
-      getEntryByBookId(book_id);
-    }
-  }, [book_id]);
+    getBookDetail();
+  }
+  , [bookId]);
 
   return (
     <Container>
-      <Col>
-        <h2>書籍詳細</h2>
-        {isLoading ? (
-          <div>Loading...</div>
-        ) : error ? (
-          <div>Error: {error}</div>
-        ) : (
-          <Table>
-            <thead>
-              <tr>
-                <th>書名</th>
-                <th>分類</th>
-                <th>角色</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entryOfBookList.map((entry) => (
-                <tr key={entry.entry_id}>
-                  <td>{entry.entry_name}</td>
-                  <td>{entry.roll}</td>
-                  <td>{entry.roll_name}</td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
-      </Col>
+      <Table>
+        <thead>
+          <tr>
+            <th>Book ID</th>
+            <th>Entry ID</th>
+            <th>Entry Name</th>
+            <th>Roll ID</th>
+            <th>Roll</th>
+            <th>Roll Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bookDetailList.map((bookDetail, index) => (
+            <tr key={index}>
+              <td>{bookDetail.book_id}</td>
+              <td>{bookDetail.entry_id}</td>
+              <td>{bookDetail.entry_name}</td>
+              <td>{bookDetail.roll_id}</td>
+              <td>{bookDetail.roll}</td>
+              <td>{bookDetail.roll_name}</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
     </Container>
   );
 };
