@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient, Role } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -14,7 +14,7 @@ prisma.user
     data: {
       email: 'admin@tku.edu',
       password: bcrypt.hashSync('287255', 10),
-      role: Role.ADMIN,
+      role: 'ADMIN',
     },
   })
   .then(() => console.log('Admin user created'))
@@ -28,7 +28,7 @@ export const register = async (req: Request, res: Response) => {
       data: {
         email,
         password: hashedPassword,
-        role: role || Role.USER, // Default role is USER if not specified
+        role: role || 'USER', // Default role is USER if not specified
       },
     });
     // res.status(201).json(newUser);，

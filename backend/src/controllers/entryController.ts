@@ -13,7 +13,7 @@ interface ReusltOfBookDetails {
   roll_name: string;
 }
 
-interface Entry {
+interface EntryWithBookAndRoll {
   id: number;
   entry_name: string;
   roll: string;
@@ -23,6 +23,32 @@ interface Entry {
   title: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface Book {
+  id: number;
+  title: string;
+  createdAt: Date;
+  updatedAt: Date;
+  roll: Roll[];
+}
+
+interface Roll {
+  id: number;
+  roll: string;
+  roll_name: string;
+  bookId: number;
+  createdAt: Date;
+  updatedAt: Date;
+  entries: Entry[];
+}
+
+interface Entry {
+  id: number;
+  entry_name: string;
+  rollId: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export const getEntries = async (
@@ -117,7 +143,7 @@ export const getEntries = async (
     });
 
     // Flatten the results to match your desired output format
-    const flatResults: Entry[] = entries.map((entry: any) => ({
+    const flatResults: EntryWithBookAndRoll[] = entries.map((entry: any) => ({
       id: entry.id,
       entry_name: entry.entry_name,
       roll: entry.roll.roll,
@@ -234,8 +260,8 @@ export const getBookWithDetails = async (
 
     // Flattening the result to match your desired output format
     const flatResults: ReusltOfBookDetails[] = [];
-    bookDetails.rolls.forEach((roll: any) => {
-      roll.entries.forEach((entry: any) => {
+    bookDetails.rolls.forEach((roll: Roll) => {
+      roll.entries.forEach((entry: Entry) => {
         flatResults.push({
           title: bookDetails.title,
           book_id: bookDetails.id,
