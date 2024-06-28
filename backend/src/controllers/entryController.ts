@@ -25,12 +25,27 @@ interface Entry {
   updatedAt: string;
 }
 
-// Get all entries
 export const getEntries = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  console.log('Get all entries');
+  const { size, page, keyword } = req.params;
+
+  // Convert string parameters to numbers
+  const intSize = parseInt(size);
+  const intPage = parseInt(page);
+  const offset = intSize * (intPage - 1);
+
+  // Parse keyword string to object
+  const searchParams = new URLSearchParams(keyword);
+  const bookTitle = searchParams.get('bookTitle') ?? '';
+  const roll = searchParams.get('roll') ?? '';
+  const rollName = searchParams.get('rollName') ?? '';
+  const entryName = searchParams.get('entryName') ?? '';
+
+  console.log(
+    `Searching... bookTitle: "${bookTitle}", roll: "${roll}", rollName: "${rollName}", entryName: "${entryName}"`
+  );
 
   try {
     const entries = await prisma.entry.findMany({
@@ -53,24 +68,67 @@ export const getEntries = async (
         createdAt: true,
         updatedAt: true,
       },
+      skip: offset,
+      take: intSize,
+      where: {
+        // Add filters for each search parameter, only adding them if they are not empty
+        AND: [
+          bookTitle
+            ? {
+                roll: {
+                  book: {
+                    title: {
+                      contains: bookTitle,
+                      mode: 'insensitive', // Case insensitive
+                    },
+                  },
+                },
+              }
+            : {},
+          roll
+            ? {
+                roll: {
+                  roll: {
+                    contains: roll,
+                    mode: 'insensitive',
+                  },
+                },
+              }
+            : {},
+          rollName
+            ? {
+                roll: {
+                  roll_name: {
+                    contains: rollName,
+                    mode: 'insensitive',
+                  },
+                },
+              }
+            : {},
+          entryName
+            ? {
+                entry_name: {
+                  contains: entryName,
+                  mode: 'insensitive',
+                },
+              }
+            : {},
+        ],
+      },
     });
 
-    // Flattening the result to match your desired output format
-    const flatResults: Entry[] = [];
-    entries.forEach((entry) => {
-      flatResults.push({
-        id: entry.id,
-        entry_name: entry.entry_name,
-        roll: entry.roll.roll,
-        roll_name: entry.roll.roll_name,
-        rollId: entry.roll.id,
-        title: entry.roll.book.title,
-        bookId: entry.roll.book.id,
-        createdAt: entry.createdAt.toISOString(),
-        updatedAt: entry.updatedAt.toISOString(),
-      });
-    });
-
+    // Flatten the results to match your desired output format
+    const flatResults: Entry[] = entries.map((entry) => ({
+      id: entry.id,
+      entry_name: entry.entry_name,
+      roll: entry.roll.roll,
+      roll_name: entry.roll.roll_name,
+      rollId: entry.roll.id,
+      title: entry.roll.book.title,
+      bookId: entry.roll.book.id,
+      createdAt: entry.createdAt.toISOString(),
+      updatedAt: entry.updatedAt.toISOString(),
+    }));
 
     res.json(flatResults);
   } catch (error) {
@@ -86,7 +144,7 @@ export const countEntries = async (
 ): Promise<void> => {
   const keyword = req.params.keyword;
 
-  console.log(`Count entries with keyword: ${keyword}`);
+  // console.log(`Count entries with keyword: ${keyword}`);
 
   try {
     const entriesCount = await prisma.entry.count();

@@ -16,7 +16,6 @@ const HeaderMenu: React.FC = () => {
     window.location.href = '/login';
   };
 
-
   return (
     <Navbar expand="lg" className="bg-body-tertiary">
       <Container>

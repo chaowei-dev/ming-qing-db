@@ -2,6 +2,7 @@ import React from 'react';
 import { Form, Pagination } from 'react-bootstrap';
 
 interface CustomPaginationProps {
+  category: string;
   totalPages: number;
   pageNum: number;
   pageSize: number;
@@ -9,6 +10,7 @@ interface CustomPaginationProps {
 }
 
 const CustomPagination: React.FC<CustomPaginationProps> = ({
+  category,
   totalPages,
   pageNum,
   pageSize,
@@ -19,7 +21,7 @@ const CustomPagination: React.FC<CustomPaginationProps> = ({
 
   const handlePageChange = (newPage: number) => {
     // Reload the page with the new page number
-    window.location.href = `/book/list/${itemsPerPage}/${newPage}/${keyword}`;
+    window.location.href = `/${category}/list/${itemsPerPage}/${newPage}/${keyword}`;
   };
 
   return (
@@ -34,7 +36,7 @@ const CustomPagination: React.FC<CustomPaginationProps> = ({
         onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
       />
       {/* Input */}
-      <div className="d-flex align-items-center ml-1 mr-1">
+      <div className="d-flex align-items-center ms-1 me-1">
         <Form.Control
           type="number"
           min="1"

@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { countEntries, fetchEntryList } from '../../services/entryService';
 import CustomPagination from '../CustomPagination';
 import { Container, Row, Col, Table, Button } from 'react-bootstrap';
+import SearchForm from './SearchForm';
+import PageNumOption from './PageNumOption';
 
 interface Entry {
   id: number;
@@ -67,6 +69,7 @@ const EntryList = () => {
   // Create Pagination
   const paginationComponent = (
     <CustomPagination
+      category="entry"
       totalPages={totalPages}
       pageNum={pageNum}
       pageSize={pageSize}
@@ -80,10 +83,16 @@ const EntryList = () => {
   return (
     <Container>
       <Row className="mt-4">
-        <Col>Search</Col>
+        <Col>
+          <SearchForm
+            pageNum={pageNum}
+            pageSize={pageSize}
+            keyword={keyword!}
+          />
+        </Col>
         <Col className="d-flex justify-content-end">
           {paginationComponent}
-          <p className="ml-3 mt-2">{totalEntries}筆</p>
+          <p className="ms-4 mt-2">{totalEntries}筆</p>
         </Col>
       </Row>
       <Row className="mt-4">
@@ -117,6 +126,19 @@ const EntryList = () => {
               ))}
             </tbody>
           </Table>
+        </Col>
+      </Row>
+      <Row>
+        <Col></Col>
+        <Col className="d-flex justify-content-center">
+          {paginationComponent}
+        </Col>
+        <Col className="d-flex justify-content-end">
+          <PageNumOption
+            pageSize={pageSize}
+            pageNum={pageNum}
+            keyword={keyword!}
+          />
         </Col>
       </Row>
     </Container>

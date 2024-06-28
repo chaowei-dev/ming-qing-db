@@ -63,6 +63,7 @@ const BookList = () => {
   // Create Pagination component
   const paginationComponent = (
     <CustomPagination
+      category="book"
       totalPages={totalPages}
       pageNum={pageNum}
       pageSize={pageSize}
@@ -90,6 +91,11 @@ const BookList = () => {
 
   return (
     <Container>
+      <Row className="mt-4">
+        <Col className="text-center">
+          <h2>書籍列表</h2>
+        </Col>
+      </Row>
       <Row className="mt-4">
         <Col>Search</Col>
         <Col className="d-flex justify-content-end">
