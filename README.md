@@ -76,9 +76,12 @@ ming-qing-db/
     └── README.md         # Frontend-specific documentation
 ```
 
-# .env
+# Database (Postgresql)
 
-- backend
+- backend (.env)
+
   - `DATABASE_URL=postgresql://user:pass@localhost:5432/dbname`
   - `JWT_SECRET=your_jwt_secret`
-- frontend
+
+- postgresql docker:
+  `docker run --name postgres-container --network backend_network -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=ming_qing -d -p 5432:5432 -v /home/curry/postgresql/data:/var/lib/postgresql/data postgres`
