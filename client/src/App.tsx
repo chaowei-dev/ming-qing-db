@@ -11,6 +11,7 @@ import BookEdit from './components/books/BookEdit';
 import BookAdd from './components/books/BookAdd';
 import EntryList from './components/books/EntryList';
 import BookDetail from './components/books/BookDetail';
+import Home from './components/Home';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/home" element={<Home />} />
           <Route
             path="/book/list/:pageSize/:pageNum/:keyword?"
             element={

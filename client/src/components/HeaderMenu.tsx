@@ -16,10 +16,11 @@ const HeaderMenu: React.FC = () => {
     window.location.href = '/login';
   };
 
+
   return (
     <Navbar expand="lg" className="bg-body-tertiary">
       <Container>
-        <Navbar.Brand href="#home">明清書目資料庫</Navbar.Brand>
+        <Navbar.Brand href="/home">明清書目資料庫</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">

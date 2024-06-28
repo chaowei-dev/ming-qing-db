@@ -13,13 +13,66 @@ interface ReusltOfBookDetails {
   roll_name: string;
 }
 
+interface Entry {
+  id: number;
+  entry_name: string;
+  roll: string;
+  bookId: number;
+  rollId: number;
+  roll_name: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Get all entries
-export const getEntries = async (req: Request, res: Response): Promise<void> => {
+export const getEntries = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   console.log('Get all entries');
 
   try {
-    const entries = await prisma.entry.findMany();
-    res.json(entries);
+    const entries = await prisma.entry.findMany({
+      select: {
+        id: true,
+        entry_name: true,
+        roll: {
+          select: {
+            roll: true,
+            roll_name: true,
+            id: true,
+            book: {
+              select: {
+                title: true,
+                id: true,
+              },
+            },
+          },
+        },
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // Flattening the result to match your desired output format
+    const flatResults: Entry[] = [];
+    entries.forEach((entry) => {
+      flatResults.push({
+        id: entry.id,
+        entry_name: entry.entry_name,
+        roll: entry.roll.roll,
+        roll_name: entry.roll.roll_name,
+        rollId: entry.roll.id,
+        title: entry.roll.book.title,
+        bookId: entry.roll.book.id,
+        createdAt: entry.createdAt.toISOString(),
+        updatedAt: entry.updatedAt.toISOString(),
+      });
+    });
+
+
+    res.json(flatResults);
   } catch (error) {
     console.error('Error fetching entries:', error);
     res.status(500).send('Internal Server Error');
@@ -27,7 +80,10 @@ export const getEntries = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Count entries
-export const countEntries = async (req: Request, res: Response): Promise<void> => {
+export const countEntries = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const keyword = req.params.keyword;
 
   console.log(`Count entries with keyword: ${keyword}`);

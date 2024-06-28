@@ -13,8 +13,8 @@ const Login = () => {
     try {
       const userData = await login(email, password);
       if (userData.token) {
-        // reload the page to '/book/list/30/1'
-        window.location.href = '/book/list/30/1';
+        // reload the page
+        window.location.href = '/home';
       }
     } catch (err: any) {
       setError(err.message || 'Login failed, please try again.');

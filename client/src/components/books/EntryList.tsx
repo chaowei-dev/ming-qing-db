@@ -2,14 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { countEntries, fetchEntryList } from '../../services/entryService';
 import CustomPagination from '../CustomPagination';
-import { Container, Row, Col, Table } from 'react-bootstrap';
+import { Container, Row, Col, Table, Button } from 'react-bootstrap';
 
 interface Entry {
   id: number;
   entry_name: string;
+  roll: string;
+  roll_name: string;
   rollId: number;
-  createBy: string;
-  updateBy: string;
+  title: string;
+  bookId: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const EntryList = () => {
@@ -55,6 +59,11 @@ const EntryList = () => {
     handleTotalPages();
   }, [pageSize, pageNum, keyword]);
 
+  const handleBookDetails = (bookId: number) => {
+    // Use book id to redirect to book detail page
+    window.location.href = `/book/detail/${bookId}`;
+  };
+
   // Create Pagination
   const paginationComponent = (
     <CustomPagination
@@ -82,11 +91,11 @@ const EntryList = () => {
           <Table striped bordered hover>
             <thead>
               <tr>
-                <th>#</th>
-                <th>Entry Name</th>
-                <th>Roll ID</th>
-                <th>Created By</th>
-                <th>Updated By</th>
+                <th>編號</th>
+                <th>篇名</th>
+                <th>書目</th>
+                <th>卷次</th>
+                <th>卷名</th>
               </tr>
             </thead>
             <tbody>
@@ -94,9 +103,16 @@ const EntryList = () => {
                 <tr key={entry.id}>
                   <td>{serialNum + index}</td>
                   <td>{entry.entry_name}</td>
-                  <td>{entry.rollId}</td>
-                  <td>{entry.createBy}</td>
-                  <td>{entry.updateBy}</td>
+                  <td>
+                    <Button
+                      variant="link"
+                      onClick={() => handleBookDetails(entry.bookId)}
+                    >
+                      {entry.title}
+                    </Button>
+                  </td>
+                  <td>{entry.roll}</td>
+                  <td>{entry.roll_name}</td>
                 </tr>
               ))}
             </tbody>
