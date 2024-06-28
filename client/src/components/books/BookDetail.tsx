@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getBookDetailsById } from '../../services/bookService';
 import { Container, Row, Table, Col } from 'react-bootstrap';

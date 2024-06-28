@@ -10,16 +10,11 @@ interface FormProps {
 }
 
 interface SearchFormProps {
-  pageNum: number;
   pageSize: number;
   keyword: string;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({
-  pageNum,
-  pageSize,
-  keyword,
-}) => {
+const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
   const [keywordForm, setKeywordForm] = useState<FormProps>({
     bookTitle: '',
     roll: '',

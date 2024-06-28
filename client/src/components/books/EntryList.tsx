@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { countEntries, fetchEntryList } from '../../services/entryService';
 import CustomPagination from '../CustomPagination';
@@ -91,11 +91,7 @@ const EntryList = () => {
       </Row>
       <Row className="mt-4">
         <Col>
-          <SearchForm
-            pageNum={pageNum}
-            pageSize={pageSize}
-            keyword={keyword!}
-          />
+          <SearchForm pageSize={pageSize} keyword={keyword!} />
         </Col>
         <Col className="d-flex justify-content-end">
           {paginationComponent}

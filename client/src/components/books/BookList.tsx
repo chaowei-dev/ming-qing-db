@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { countBooks, fetchBookList } from '../../services/bookService';
 import { Button, Col, Container, Row, Table } from 'react-bootstrap';
 import CustomPagination from '../CustomPagination';
-import ListTable from './ListTable';
 
 interface Book {
   id: number;
