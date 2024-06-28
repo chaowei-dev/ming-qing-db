@@ -6,6 +6,6 @@ import { getEntries, countEntries } from '../controllers/entryController';
 const router = express.Router();
 
 router.get('/list/:size/:page/:keyword', isAuthenticated, getEntries);
-router.get('/count/:keyword', isAuthenticated, isAdmin, countEntries);
+router.get('/count/:keyword', isAuthenticated, countEntries);
 
 export default router;

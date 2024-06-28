@@ -83,6 +83,13 @@ const EntryList = () => {
   return (
     <Container>
       <Row className="mt-4">
+        <Col className="text-center">
+          <h2>
+            <b>篇名列表</b>
+          </h2>
+        </Col>
+      </Row>
+      <Row className="mt-4">
         <Col>
           <SearchForm
             pageNum={pageNum}

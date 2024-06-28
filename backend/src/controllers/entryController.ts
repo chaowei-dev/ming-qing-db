@@ -71,7 +71,6 @@ export const getEntries = async (
       skip: offset,
       take: intSize,
       where: {
-        // Add filters for each search parameter, only adding them if they are not empty
         AND: [
           bookTitle
             ? {
@@ -142,12 +141,63 @@ export const countEntries = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const keyword = req.params.keyword;
+  // Parse keyword string to object
+  const { keyword } = req.params;
+  const searchParams = new URLSearchParams(keyword);
+  const bookTitle = searchParams.get('bookTitle') ?? '';
+  const roll = searchParams.get('roll') ?? '';
+  const rollName = searchParams.get('rollName') ?? '';
+  const entryName = searchParams.get('entryName') ?? '';
 
-  // console.log(`Count entries with keyword: ${keyword}`);
+  console.log(`Count entries with keyword: ${keyword}`);
 
   try {
-    const entriesCount = await prisma.entry.count();
+    const entriesCount = await prisma.entry.count({
+      where: {
+        AND: [
+          bookTitle
+            ? {
+                roll: {
+                  book: {
+                    title: {
+                      contains: bookTitle,
+                      mode: 'insensitive', // Case insensitive
+                    },
+                  },
+                },
+              }
+            : {},
+          roll
+            ? {
+                roll: {
+                  roll: {
+                    contains: roll,
+                    mode: 'insensitive',
+                  },
+                },
+              }
+            : {},
+          rollName
+            ? {
+                roll: {
+                  roll_name: {
+                    contains: rollName,
+                    mode: 'insensitive',
+                  },
+                },
+              }
+            : {},
+          entryName
+            ? {
+                entry_name: {
+                  contains: entryName,
+                  mode: 'insensitive',
+                },
+              }
+            : {},
+        ],
+      },
+    });
 
     res.json(entriesCount);
   } catch (error) {

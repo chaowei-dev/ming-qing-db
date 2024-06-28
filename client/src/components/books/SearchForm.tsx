@@ -52,7 +52,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
     const searchQuery = `bookTitle=${keywordForm.bookTitle}&roll=${keywordForm.roll}&rollName=${keywordForm.rollName}&entryName=${keywordForm.entryName}`;
 
     // Redirect to the search page
-    const url = `/entry/list/${pageSize}/${pageNum}/${searchQuery}`;
+    const url = `/entry/list/${pageSize}/1/${searchQuery}`;
     navigate(url);
   };
 
@@ -64,7 +64,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
             <InputGroup.Text>書目</InputGroup.Text>
             <Form.Control
               type="text"
-              placeholder="書目"
               value={keywordForm.bookTitle}
               onChange={(e) =>
                 setKeywordForm({ ...keywordForm, bookTitle: e.target.value })
@@ -77,7 +76,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
             <InputGroup.Text>卷次</InputGroup.Text>
             <Form.Control
               type="text"
-              placeholder="卷次"
               value={keywordForm.roll}
               onChange={(e) =>
                 setKeywordForm({ ...keywordForm, roll: e.target.value })
@@ -90,7 +88,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
             <InputGroup.Text>卷名</InputGroup.Text>
             <Form.Control
               type="text"
-              placeholder="卷名"
               value={keywordForm.rollName}
               onChange={(e) =>
                 setKeywordForm({ ...keywordForm, rollName: e.target.value })
@@ -103,7 +100,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
             <InputGroup.Text>篇名</InputGroup.Text>
             <Form.Control
               type="text"
-              placeholder="篇名"
               value={keywordForm.entryName}
               onChange={(e) =>
                 setKeywordForm({ ...keywordForm, entryName: e.target.value })

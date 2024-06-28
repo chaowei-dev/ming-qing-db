@@ -93,7 +93,9 @@ const BookList = () => {
     <Container>
       <Row className="mt-4">
         <Col className="text-center">
-          <h2>書籍列表</h2>
+          <h2>
+            <b>書目列表</b>
+          </h2>
         </Col>
       </Row>
       <Row className="mt-4">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getBookDetailsById } from '../../services/bookService';
-import { Container, Table } from 'react-bootstrap';
+import { Container, Row, Table, Col } from 'react-bootstrap';
 
 interface BookDetail {
   title: string;
@@ -21,6 +21,7 @@ const BookDetail = () => {
   const bookId = params.id;
 
   const [bookDetailList, setBookDetailList] = useState<BookDetail[]>([]);
+  const [pageTitle, setPageTitle] = useState<string>('');
 
   // Get book detail (roll, roll_name, entry) by book id from server
   const getBookDetail = async () => {
@@ -28,39 +29,46 @@ const BookDetail = () => {
     console.log(response);
 
     setBookDetailList(response);
-  }
+    setPageTitle(response[0].title);
+  };
 
   useEffect(() => {
     getBookDetail();
-  }
-  , [bookId]);
+  }, [bookId]);
+
+  let serialNum: number = 1;
 
   return (
     <Container>
-      <Table>
-        <thead>
-          <tr>
-            <th>Book ID</th>
-            <th>Entry ID</th>
-            <th>Entry Name</th>
-            <th>Roll ID</th>
-            <th>Roll</th>
-            <th>Roll Name</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bookDetailList.map((bookDetail, index) => (
-            <tr key={index}>
-              <td>{bookDetail.book_id}</td>
-              <td>{bookDetail.entry_id}</td>
-              <td>{bookDetail.entry_name}</td>
-              <td>{bookDetail.roll_id}</td>
-              <td>{bookDetail.roll}</td>
-              <td>{bookDetail.roll_name}</td>
+      <Row className="mt-3">
+        <Col className="text-center">
+          <h2>
+            <b>{pageTitle}</b>
+          </h2>
+        </Col>
+      </Row>
+      <Row className="mt-3">
+        <Table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>篇名</th>
+              <th>卷次</th>
+              <th>卷名</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {bookDetailList.map((bookDetail, index) => (
+              <tr key={index}>
+                <td>{serialNum++}</td>
+                <td>{bookDetail.entry_name}</td>
+                <td>{bookDetail.roll}</td>
+                <td>{bookDetail.roll_name}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Row>
     </Container>
   );
 };
