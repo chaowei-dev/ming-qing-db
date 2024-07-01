@@ -1,26 +1,32 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import React, { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
+import { checkRoleIsAllowed, isTokenExpired } from '../../services/authService';
 
 interface PrivateRouteProps {
-  children: JSX.Element;
   allowedRoles: string[];
+  children: ReactNode;
 }
-
-const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
-  // Get the current location
-  const location = useLocation();
-
-  // Check if the user is logged in
-  const token = localStorage.getItem('token');
-
-  // Check if the user has the required role
-  const userRole = localStorage.getItem('role');
-
-  // Redirect to login if the user is not logged in or does not have the required role
-  if (!token || !allowedRoles.includes(userRole!)) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+// Check user's role
+// Check expiration time of the token
+const PrivateRoute: React.FC<PrivateRouteProps> = ({
+  allowedRoles,
+  children,
+}) => {
+  // Check if the token has expired
+  if (isTokenExpired()) {
+    // If the token has expired, redirect to login page
+    return <Navigate to="/login" replace />;
   }
 
-  return children;
+  // Check if the user's role is allowed to access this route
+  if (!checkRoleIsAllowed(allowedRoles)) {
+    // If the role is not allowed, redirect to login or unauthorized access page
+    // Redirecting to login for simplicity, but consider a dedicated unauthorized page
+    return <Navigate to="/login" replace />;
+  }
+
+  // If all checks pass, render the protected component
+  return <>{children}</>;
 };
 
 export default PrivateRoute;

@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
 import Login from './components/auth/Login';
 import SignUp from './components/auth/SignUp';
 import AdminDashboard from './components/auth/AdminDashboard';
@@ -11,6 +16,7 @@ import BookAdd from './components/books/BookAdd';
 import EntryList from './components/books/EntryList';
 import BookDetail from './components/books/BookDetail';
 import Home from './components/Home';
+import { isTokenExpired } from './services/authService';
 
 function App() {
   return (
@@ -20,9 +26,29 @@ function App() {
       </div>
       <Router>
         <Routes>
+          {/* root route */}
+          <Route
+            path="*"
+            element={
+              isTokenExpired() ? (
+                <Navigate to="/home" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          {/* auth route */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/home" element={<Home />} />
+          {/* user route */}
+          <Route
+            path="/home"
+            element={
+              <PrivateRoute allowedRoles={['USER', 'ADMIN']}>
+                <Home />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/book/list/:pageSize/:pageNum/:keyword?"
             element={

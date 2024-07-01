@@ -8,17 +8,27 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
-// Create a new user on init
-prisma.user
-  .create({
-    data: {
-      email: 'admin@tku.edu',
-      password: bcrypt.hashSync('287255', 10),
-      role: 'ADMIN',
-    },
-  })
-  .then(() => console.log('Admin user created'))
-  .catch(() => console.log('Admin user already exists'));
+type Role = 'USER' | 'ADMIN';
+
+const createInitialUser = async (
+  userName: string,
+  userPass: string,
+  userRole: Role
+) => {
+  prisma.user
+    .create({
+      data: {
+        email: `${userName}@tku.edu`,
+        password: bcrypt.hashSync(userPass, 10),
+        role: userRole,
+      },
+    })
+    .then(() => console.log(`"${userName}@tku.edu" user created`))
+    .catch(() => console.log(`"${userName}@tku.edu" user already exists`));
+};
+
+createInitialUser('admin', '287255', 'ADMIN');
+createInitialUser('user', '287255', 'USER');
 
 export const register = async (req: Request, res: Response) => {
   const { email, password, role } = req.body;
@@ -43,21 +53,26 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   try {
+    // Find user by email
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(400).json({ message: 'Incorrect email or password.' });
     }
 
+    // Compare password
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
       return res.status(400).json({ message: 'Incorrect email or password.' });
     }
 
+    // Generate token
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET as string,
       { expiresIn: '1h' }
     );
+
+    // Return token
     res.json({ token });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
