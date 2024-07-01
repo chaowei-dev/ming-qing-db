@@ -74,6 +74,7 @@ const EntryList = () => {
       pageNum={pageNum}
       pageSize={pageSize}
       keyword={keyword}
+      itemCount={totalEntries}
     />
   );
 
@@ -93,10 +94,7 @@ const EntryList = () => {
         <Col>
           <SearchForm pageSize={pageSize} keyword={keyword!} />
         </Col>
-        <Col className="d-flex justify-content-end">
-          {paginationComponent}
-          <p className="ms-4 mt-2">{totalEntries}筆</p>
-        </Col>
+        <Col className="d-flex justify-content-end">{paginationComponent}</Col>
       </Row>
       <Row className="mt-4">
         <Col>

@@ -67,6 +67,7 @@ const BookList = () => {
       pageNum={pageNum}
       pageSize={pageSize}
       keyword={keyword}
+      itemCount={totalBooks}
     />
   );
 
@@ -99,10 +100,7 @@ const BookList = () => {
       </Row>
       <Row className="mt-4">
         <Col>Search</Col>
-        <Col className="d-flex justify-content-end">
-          {paginationComponent}
-          <p className="ml-3 mt-2">{totalBooks}筆</p>
-        </Col>
+        <Col className="d-flex justify-content-end">{paginationComponent}</Col>
       </Row>
       <Row className="mt-4">
         <Col>
