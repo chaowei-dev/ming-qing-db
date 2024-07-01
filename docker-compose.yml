@@ -1,28 +1,39 @@
 version: '3.8'
 
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.backend
-    expose:
-      - '3001'
-    networks:
-      - backend_network
-    restart: always
-
   client:
     build:
       context: ./client
-      dockerfile: Dockerfile.client
+      dockerfile: Dockerfile
     ports:
-      - '80:80'
-    depends_on:
-      - backend
+      - "80:80"
     networks:
-      - backend_network
-    restart: always
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+
+  db:
+    image: postgres:16
+    container_name: postgres-container
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - /home/curry/postgresql/data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
 networks:
-  backend_network:
-    external: true
+  app-network:
+    driver: bridge
