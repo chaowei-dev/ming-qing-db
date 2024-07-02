@@ -51,6 +51,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
     navigate(url);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <Form>
       <Row>
@@ -65,24 +71,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
               }
             />
           </InputGroup>
-
-          <InputGroup size="sm">
-            <InputGroup.Text>卷次</InputGroup.Text>
-            <Form.Control
-              type="text"
-              value={keywordForm.roll}
-              onChange={(e) =>
-                setKeywordForm({ ...keywordForm, roll: e.target.value })
-              }
-            />
-          </InputGroup>
-        </Col>
-        <Col>
           <InputGroup size="sm">
             <InputGroup.Text>卷名</InputGroup.Text>
             <Form.Control
               type="text"
               value={keywordForm.rollName}
+              onKeyDown={handleKeyDown}
               onChange={(e) =>
                 setKeywordForm({ ...keywordForm, rollName: e.target.value })
               }
@@ -94,6 +88,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
             <Form.Control
               type="text"
               value={keywordForm.entryName}
+              onKeyDown={handleKeyDown}
               onChange={(e) =>
                 setKeywordForm({ ...keywordForm, entryName: e.target.value })
               }

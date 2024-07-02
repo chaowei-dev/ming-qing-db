@@ -22,6 +22,7 @@ const PageNumOption: React.FC<PageNumOptionProps> = ({
 
   return (
     <>
+      {/* FIXME: init value to get correct */}
       {/* Dropdown for page limit */}
       <Form.Control
         size="sm"
