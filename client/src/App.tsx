@@ -16,6 +16,8 @@ import BookAdd from './components/books/BookAdd';
 import EntryList from './components/books/EntryList';
 import BookDetail from './components/books/BookDetail';
 import Home from './components/Home';
+import EditUser from './components/auth/EditUser';
+import ImportEntries from './components/books/ImportEntries';
 import { isTokenExpired } from './services/authService';
 
 function App() {
@@ -103,6 +105,22 @@ function App() {
             element={
               <PrivateRoute allowedRoles={['USER', 'ADMIN']}>
                 <UserDashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/edituser"
+            element={
+              <PrivateRoute allowedRoles={['ADMIN']}>
+                <EditUser />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/importentries"
+            element={
+              <PrivateRoute allowedRoles={['ADMIN']}>
+                <ImportEntries />
               </PrivateRoute>
             }
           />

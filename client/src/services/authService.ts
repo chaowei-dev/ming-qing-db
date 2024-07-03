@@ -43,6 +43,7 @@ export const logout = () => {
 interface DecodedToken {
   exp: number;
   role: string;
+  email: string;
 }
 
 // Check role of the user is allowed
@@ -92,5 +93,26 @@ export const isTokenExpired = (): boolean => {
   } catch (error) {
     console.error('Error decoding token: ', error);
     return true;
+  }
+};
+
+// Get the user's email from the token
+export const getUserEmail = (): string => {
+  // Get the token from local storage
+  const token = localStorage.getItem('token');
+
+  // Check token is existed or not
+  if (!token) {
+    return '';
+  }
+
+  // Decode the token
+  try {
+    const { email } = jwtDecode<DecodedToken>(token);
+
+    return email;
+  } catch (error) {
+    console.error('Error decoding token: ', error);
+    return '';
   }
 };

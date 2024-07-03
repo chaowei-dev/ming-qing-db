@@ -75,7 +75,7 @@ const EntryList = () => {
       <Row className="mt-4">
         <Col className="text-center">
           <h2>
-            <b>篇名列表</b>
+            <b>篇目列表</b>
           </h2>
         </Col>
       </Row>
@@ -98,7 +98,7 @@ const EntryList = () => {
               <thead>
                 <tr>
                   <th>編號</th>
-                  <th>篇名</th>
+                  <th>篇目</th>
                   <th>書目</th>
                   <th>卷次</th>
                   <th>卷名</th>

@@ -52,7 +52,7 @@ const BookDetail = () => {
           <thead>
             <tr>
               <th>#</th>
-              <th>篇名</th>
+              <th>篇目</th>
               <th>卷次</th>
               <th>卷名</th>
             </tr>
