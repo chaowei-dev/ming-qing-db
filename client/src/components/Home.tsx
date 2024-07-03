@@ -1,4 +1,4 @@
-import { Card, Container, Row, Col } from 'react-bootstrap';
+import { Card, Container, Row } from 'react-bootstrap';
 import myImage from '../assets/nishinonanase.jpg';
 import './Home.css';
 
