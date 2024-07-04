@@ -75,9 +75,7 @@ const CustomPagination: React.FC<CustomPaginationProps> = ({
       </Row>
       <Row className="mt-2 ms-2">
         <Col className="d-flex justify-content-end">
-          {/* <div className="d-flex align-items-center ms-1"> */}
-          <span>{itemCount}筆</span>
-          {/* </div> */}
+          <span>{itemCount.toLocaleString()}筆</span>
         </Col>
       </Row>
     </>

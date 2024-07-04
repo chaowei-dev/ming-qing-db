@@ -72,8 +72,28 @@ export const getBookById = async (req: Request, res: Response) => {
 export const getBookCount = async (req: Request, res: Response) => {
   const { keyword } = req.params;
 
+  // Parse keyword string to object
+  const searchParams = new URLSearchParams(keyword);
+  const bookTitle = searchParams.get('bookTitle') ?? '';
+  const bookAuthor = searchParams.get('bookAuthor') ?? '';
+  const bookSource = searchParams.get('bookSource') ?? '';
+
   try {
-    const count = await prisma.book.count();
+    const count = await prisma.book.count({
+      where: {
+        AND: [
+          bookTitle
+            ? { title: { contains: bookTitle, mode: 'insensitive' } }
+            : {},
+          bookAuthor
+            ? { author: { contains: bookAuthor, mode: 'insensitive' } }
+            : {},
+          bookSource
+            ? { source: { contains: bookSource, mode: 'insensitive' } }
+            : {},
+        ],
+      },
+    });
     res.json(count);
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });

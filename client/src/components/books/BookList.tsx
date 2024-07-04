@@ -158,12 +158,15 @@ const BookList = () => {
       </Row>
       <Row className="mt-4">
         <Col></Col>
-        <Col>{paginationComponent}</Col>
-        <Col>
+        <Col className="d-flex justify-content-center">
+          {paginationComponent}
+        </Col>
+        <Col className="d-flex justify-content-end">
           <PageNumOption
             pageSize={pageSize}
             pageNum={pageNum}
             keyword={keyword!}
+            pageCategory="book"
           />
         </Col>
       </Row>

@@ -155,6 +155,7 @@ const EntryList = () => {
             pageSize={pageSize}
             pageNum={pageNum}
             keyword={keyword!}
+            pageCategory="entry"
           />
         </Col>
       </Row>

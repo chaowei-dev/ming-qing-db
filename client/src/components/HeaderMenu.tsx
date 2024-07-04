@@ -46,19 +46,23 @@ const HeaderMenu: React.FC = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link href="/book/list/30/1">書目列表</Nav.Link>
-            <Nav.Link href="/entry/list/30/1">篇目列表</Nav.Link>
-            {/* {isAdmin && <Nav.Link href="/book/add">新增書目</Nav.Link>} */}
-            {isAdmin && <Nav.Link href="/importentries">匯入篇目</Nav.Link>}
-            {isAdmin && (
-              <NavDropdown title="進階設定" id="basic-nav-dropdown">
-                <NavDropdown.Item href="/edituser">
-                  編輯用戶(管理者)
-                </NavDropdown.Item>
-                <NavDropdown.Item href="#action/3.3">
-                  Something
-                </NavDropdown.Item>
-              </NavDropdown>
+            {isLogin && (
+              <>
+                <Nav.Link href="/book/list/50/1">書目列表</Nav.Link>
+                <Nav.Link href="/entry/list/50/1">篇目列表</Nav.Link>
+                {/* {isAdmin && <Nav.Link href="/book/add">新增書目</Nav.Link>} */}
+                {isAdmin && <Nav.Link href="/importentries">匯入篇目</Nav.Link>}
+                {isAdmin && (
+                  <NavDropdown title="進階設定" id="basic-nav-dropdown">
+                    <NavDropdown.Item href="/edituser">
+                      編輯用戶(管理者)
+                    </NavDropdown.Item>
+                    <NavDropdown.Item href="#action/3.3">
+                      Something
+                    </NavDropdown.Item>
+                  </NavDropdown>
+                )}
+              </>
             )}
           </Nav>
           <Nav>
