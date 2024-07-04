@@ -5,7 +5,7 @@ import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import { logout } from '../services/authService';
-import logoImage from '../../public/logo.svg';
+import logoImage from '../assets/logo.svg';
 import {
   checkRoleIsAllowed,
   isTokenExpired,

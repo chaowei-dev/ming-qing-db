@@ -28,6 +28,7 @@ interface EntryWithBookAndRoll {
 interface Book {
   id: number;
   title: string;
+  author: string;
   createdAt: Date;
   updatedAt: Date;
   roll: Roll[];
@@ -65,12 +66,12 @@ export const getEntries = async (
   // Parse keyword string to object
   const searchParams = new URLSearchParams(keyword);
   const bookTitle = searchParams.get('bookTitle') ?? '';
-  const roll = searchParams.get('roll') ?? '';
   const rollName = searchParams.get('rollName') ?? '';
   const entryName = searchParams.get('entryName') ?? '';
+  const authorName = searchParams.get('authorName') ?? '';
 
   console.log(
-    `Searching... bookTitle: "${bookTitle}", roll: "${roll}", rollName: "${rollName}", entryName: "${entryName}"`
+    `Searching... bookTitle:"${bookTitle}", author:"${authorName}", rollName:"${rollName}", entryName:"${entryName}"`
   );
 
   try {
@@ -87,6 +88,7 @@ export const getEntries = async (
               select: {
                 title: true,
                 id: true,
+                author: true,
               },
             },
           },
@@ -96,6 +98,7 @@ export const getEntries = async (
       },
       skip: offset,
       take: intSize,
+      // Filter entries by keyword (if a item is empty, it will be ignored)
       where: {
         AND: [
           bookTitle
@@ -106,16 +109,6 @@ export const getEntries = async (
                       contains: bookTitle,
                       mode: 'insensitive', // Case insensitive
                     },
-                  },
-                },
-              }
-            : {},
-          roll
-            ? {
-                roll: {
-                  roll: {
-                    contains: roll,
-                    mode: 'insensitive',
                   },
                 },
               }
@@ -138,6 +131,18 @@ export const getEntries = async (
                 },
               }
             : {},
+          authorName
+            ? {
+                roll: {
+                  book: {
+                    author: {
+                      contains: authorName,
+                      mode: 'insensitive',
+                    },
+                  },
+                },
+              }
+            : {},
         ],
       },
     });
@@ -150,6 +155,7 @@ export const getEntries = async (
       roll_name: entry.roll.roll_name,
       rollId: entry.roll.id,
       title: entry.roll.book.title,
+      author: entry.roll.book.author,
       bookId: entry.roll.book.id,
       createdAt: entry.createdAt.toISOString(),
       updatedAt: entry.updatedAt.toISOString(),
@@ -171,9 +177,9 @@ export const countEntries = async (
   const { keyword } = req.params;
   const searchParams = new URLSearchParams(keyword);
   const bookTitle = searchParams.get('bookTitle') ?? '';
-  const roll = searchParams.get('roll') ?? '';
   const rollName = searchParams.get('rollName') ?? '';
   const entryName = searchParams.get('entryName') ?? '';
+  const authorName = searchParams.get('authorName') ?? '';
 
   console.log(`Count entries with keyword: ${keyword}`);
 
@@ -193,16 +199,6 @@ export const countEntries = async (
                 },
               }
             : {},
-          roll
-            ? {
-                roll: {
-                  roll: {
-                    contains: roll,
-                    mode: 'insensitive',
-                  },
-                },
-              }
-            : {},
           rollName
             ? {
                 roll: {
@@ -218,6 +214,18 @@ export const countEntries = async (
                 entry_name: {
                   contains: entryName,
                   mode: 'insensitive',
+                },
+              }
+            : {},
+          authorName
+            ? {
+                roll: {
+                  book: {
+                    author: {
+                      contains: authorName,
+                      mode: 'insensitive',
+                    },
+                  },
                 },
               }
             : {},

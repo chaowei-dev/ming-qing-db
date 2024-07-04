@@ -13,6 +13,7 @@ interface Entry {
   roll_name: string;
   rollId: number;
   title: string;
+  author: string;
   bookId: number;
   createdAt: string;
   updatedAt: string;
@@ -100,6 +101,7 @@ const EntryList = () => {
                   <th>編號</th>
                   <th>篇目</th>
                   <th>書目</th>
+                  <th>作者</th>
                   <th>卷次</th>
                   <th>卷名</th>
                 </tr>
@@ -117,6 +119,7 @@ const EntryList = () => {
                         {entry.title}
                       </Button>
                     </td>
+                    <td>{entry.author}</td>
                     <td>{entry.roll}</td>
                     <td>{entry.roll_name}</td>
                   </tr>

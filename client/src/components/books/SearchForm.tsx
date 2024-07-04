@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 
 interface FormProps {
   bookTitle: string;
-  roll: string;
   rollName: string;
   entryName: string;
+  authorName: string;
 }
 
 interface SearchFormProps {
@@ -17,9 +17,9 @@ interface SearchFormProps {
 const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
   const [keywordForm, setKeywordForm] = useState<FormProps>({
     bookTitle: '',
-    roll: '',
     rollName: '',
     entryName: '',
+    authorName: '',
   });
 
   const navigate = useNavigate();
@@ -30,9 +30,9 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
       const searchParams = new URLSearchParams(keyword);
       setKeywordForm({
         bookTitle: searchParams.get('bookTitle') ?? '',
-        roll: searchParams.get('roll') ?? '',
         rollName: searchParams.get('rollName') ?? '',
         entryName: searchParams.get('entryName') ?? '',
+        authorName: searchParams.get('authorName') ?? '',
       });
     }
   };
@@ -44,7 +44,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
   // Handle search
   const handleSearch = () => {
     // Combine all the search parameters and send them to the server
-    const searchQuery = `bookTitle=${keywordForm.bookTitle}&roll=${keywordForm.roll}&rollName=${keywordForm.rollName}&entryName=${keywordForm.entryName}`;
+    const searchQuery = `bookTitle=${keywordForm.bookTitle}&rollName=${keywordForm.rollName}&entryName=${keywordForm.entryName}&authorName=${keywordForm.authorName}`;
 
     // Redirect to the search page
     const url = `/entry/list/${pageSize}/1/${searchQuery}`;
@@ -70,6 +70,15 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
                 setKeywordForm({ ...keywordForm, bookTitle: e.target.value })
               }
             />
+            <InputGroup.Text>作者</InputGroup.Text>
+            <Form.Control
+              type="text"
+              value={keywordForm.authorName}
+              onKeyDown={handleKeyDown}
+              onChange={(e) =>
+                setKeywordForm({ ...keywordForm, authorName: e.target.value })
+              }
+            />
           </InputGroup>
           <InputGroup size="sm">
             <InputGroup.Text>卷名</InputGroup.Text>
@@ -82,7 +91,6 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
               }
             />
           </InputGroup>
-
           <InputGroup size="sm">
             <InputGroup.Text>篇目</InputGroup.Text>
             <Form.Control
