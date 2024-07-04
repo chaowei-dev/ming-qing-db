@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { countBooks, fetchBookList } from '../../services/bookService';
 import { Button, Col, Container, Row, Table } from 'react-bootstrap';
 import CustomPagination from '../CustomPagination';
+import BookSearch from './BookSearch';
+import PageNumOption from './PageNumOption';
 
 interface Book {
   id: number;
@@ -59,6 +61,16 @@ const BookList = () => {
     handleTotalPages();
   }, [pageSize, pageNum, keyword]);
 
+  // Use author name to search for books
+  const handleAuthorSearch = (author: string) => {
+    // URL
+    const searchQuery = `bookAuthor=${author}`;
+    const url = `/book/list/${pageSize}/1/${searchQuery}`;
+
+    // Redirect to the search page
+    window.location.href = url;
+  };
+
   // Create Pagination component
   const paginationComponent = (
     <CustomPagination
@@ -99,7 +111,9 @@ const BookList = () => {
         </Col>
       </Row>
       <Row className="mt-4">
-        <Col>Search</Col>
+        <Col>
+          <BookSearch pageSize={pageSize} keyword={keyword!} />
+        </Col>
         <Col>{paginationComponent}</Col>
       </Row>
       <Row className="mt-4">
@@ -126,7 +140,14 @@ const BookList = () => {
                       {book.title}
                     </Button>
                   </td>
-                  <td>{book.author}</td>
+                  <td>
+                    <Button
+                      variant="link"
+                      onClick={() => handleAuthorSearch(book.author)}
+                    >
+                      {book.author}
+                    </Button>
+                  </td>
                   <td>{book.version}</td>
                   <td>{book.source}</td>
                 </tr>
@@ -136,7 +157,15 @@ const BookList = () => {
         </Col>
       </Row>
       <Row className="mt-4">
+        <Col></Col>
         <Col>{paginationComponent}</Col>
+        <Col>
+          <PageNumOption
+            pageSize={pageSize}
+            pageNum={pageNum}
+            keyword={keyword!}
+          />
+        </Col>
       </Row>
       {/* {selectedBook && (
         <BookDetail

@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { countEntries, fetchEntryList } from '../../services/entryService';
 import CustomPagination from '../CustomPagination';
 import { Container, Row, Col, Table, Button, Spinner } from 'react-bootstrap';
-import SearchForm from './SearchForm';
+import EntrySearch from './EntrySearch';
 import PageNumOption from './PageNumOption';
 
 interface Entry {
@@ -58,6 +58,15 @@ const EntryList = () => {
     window.location.href = `/book/detail/${bookId}`;
   };
 
+  const handleAuthorSearch = (author: string) => {
+    // URL
+    const searchQuery = `bookAuthor=${author}`;
+    const url = `/book/list/${pageSize}/1/${searchQuery}`;
+
+    // Redirect to the search page
+    window.location.href = url;
+  };
+
   const paginationComponent = (
     <CustomPagination
       category="entry"
@@ -82,7 +91,7 @@ const EntryList = () => {
       </Row>
       <Row className="mt-4">
         <Col>
-          <SearchForm pageSize={pageSize} keyword={keyword!} />
+          <EntrySearch pageSize={pageSize} keyword={keyword!} />
         </Col>
         <Col>{paginationComponent}</Col>
       </Row>
@@ -119,7 +128,14 @@ const EntryList = () => {
                         {entry.title}
                       </Button>
                     </td>
-                    <td>{entry.author}</td>
+                    <td>
+                      <Button
+                        variant="link"
+                        onClick={() => handleAuthorSearch(entry.author)}
+                      >
+                        {entry.author}
+                      </Button>
+                    </td>
                     <td>{entry.roll}</td>
                     <td>{entry.roll_name}</td>
                   </tr>

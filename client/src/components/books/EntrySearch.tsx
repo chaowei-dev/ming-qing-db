@@ -14,7 +14,7 @@ interface SearchFormProps {
   keyword: string;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
+const EntrySearch: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
   const [keywordForm, setKeywordForm] = useState<FormProps>({
     bookTitle: '',
     rollName: '',
@@ -70,6 +70,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
                 setKeywordForm({ ...keywordForm, bookTitle: e.target.value })
               }
             />
+          </InputGroup>
+          <InputGroup size="sm">
             <InputGroup.Text>作者</InputGroup.Text>
             <Form.Control
               type="text"
@@ -79,8 +81,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
                 setKeywordForm({ ...keywordForm, authorName: e.target.value })
               }
             />
-          </InputGroup>
-          <InputGroup size="sm">
+
             <InputGroup.Text>卷名</InputGroup.Text>
             <Form.Control
               type="text"
@@ -113,4 +114,4 @@ const SearchForm: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
   );
 };
 
-export default SearchForm;
+export default EntrySearch;

@@ -3,13 +3,28 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+interface ResultOfBook {
+  title: string;
+  author: string;
+  version: string;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // /list/:size/:page/:keyword
-export const getBooks = async (req: Request, res: Response) => {
+export const getBooks = async (req: Request, res: Response): Promise<void> => {
   const { size, page, keyword } = req.params;
 
   const intSize = parseInt(size);
   const intPage = parseInt(page);
   const offset = intSize * (intPage - 1);
+
+  // Parse keyword string to object
+  const searchParams = new URLSearchParams(keyword);
+  const bookTitle = searchParams.get('bookTitle') ?? '';
+  const bookAuthor = searchParams.get('bookAuthor') ?? '';
+  const bookSource = searchParams.get('bookSource') ?? '';
 
   // log
   console.log(`size: ${size}, page: ${page}, keyword: ${keyword}`);
@@ -18,9 +33,19 @@ export const getBooks = async (req: Request, res: Response) => {
     const books = await prisma.book.findMany({
       skip: offset,
       take: intSize,
-      // where: {
-      //   OR: [{ title: { contains: keyword } }],
-      // },
+      where: {
+        AND: [
+          bookTitle
+            ? { title: { contains: bookTitle, mode: 'insensitive' } }
+            : {},
+          bookAuthor
+            ? { author: { contains: bookAuthor, mode: 'insensitive' } }
+            : {},
+          bookSource
+            ? { source: { contains: bookSource, mode: 'insensitive' } }
+            : {},
+        ],
+      },
     });
 
     res.json(books);
