@@ -55,8 +55,8 @@ const PageNumOption: React.FC<PageNumOptionProps> = ({
         <option value="20">20</option>
         <option value="50">50</option>
         <option value="100">100</option>
-        <option value="100">300</option>
-        <option value="100">500</option>
+        <option value="300">300</option>
+        <option value="500">500</option>
       </select>
     </>
   );
