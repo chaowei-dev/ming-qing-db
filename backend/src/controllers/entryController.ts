@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import {
+  addBookAndGetBookId,
+  addEntryByRollId,
+  addRollByBookIdAndGetRollId,
+} from '../utils/addEntryList';
 
 const prisma = new PrismaClient();
 
@@ -285,6 +290,44 @@ export const getBookWithDetails = async (
     res.json(flatResults);
   } catch (error) {
     console.error('Error fetching book details:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+// Add entry
+export const addEntry = async (req: Request, res: Response): Promise<void> => {
+  // Step 1: Parse the request body
+  const { title, author, source, version, roll, rollName, entry } = req.body;
+
+  try {
+    // Step 2: Check book is exist or not by title, author, version, source
+    // If not exist, create new book, then get book id
+    // If exist, get book id
+    const bookId = await addBookAndGetBookId(title, author, version, source);
+
+    if (!bookId) {
+      res.status(500).send('Failed to add book');
+      return;
+    }
+
+    // Step 3: Check roll is exist or not by roll, rollName, bookId
+    // If not exist, create new roll, then get roll id
+    // If exist, get roll id
+    const rollId = await addRollByBookIdAndGetRollId(roll, rollName, bookId);
+
+    if (!rollId) {
+      res.status(500).send('Failed to add roll');
+      return;
+    }
+
+    // Step 4: Insert entry with rollId
+    const entryName = await addEntryByRollId(entry, rollId);
+
+    console.log(`Entry "${entryName}" added successfully`);
+
+    res.status(201).send(`Entry "${entryName}" added successfully`);
+  } catch (error) {
+    console.error('Error adding entry:', error);
     res.status(500).send('Internal Server Error');
   }
 };

@@ -23,10 +23,16 @@ interface Entry {
   roll: string;
   rollName: string;
   entry: string;
+  source: string;
 }
 
 // add book and get book id
-const addBook = async (title: string, author: string, version: string) => {
+export const addBookAndGetBookId = async (
+  title: string,
+  author: string,
+  version: string,
+  source: string
+) => {
   try {
     // i: check book exist
     const existingBook = await prisma.book.findFirst({
@@ -34,6 +40,7 @@ const addBook = async (title: string, author: string, version: string) => {
         title,
         author,
         version,
+        source,
       },
     });
 
@@ -42,7 +49,6 @@ const addBook = async (title: string, author: string, version: string) => {
     }
 
     // ii: if not existed, add book
-    const source: string = '';
     const newBook = await prisma.book.create({
       data: {
         title,
@@ -60,7 +66,11 @@ const addBook = async (title: string, author: string, version: string) => {
 };
 
 // add roll with book id and get roll id
-const addRoll = async (roll: string, roll_name: string, bookId: any) => {
+export const addRollByBookIdAndGetRollId = async (
+  roll: string,
+  roll_name: string,
+  bookId: any
+) => {
   try {
     // i: check roll exist
     const existingRoll = await prisma.roll.findFirst({
@@ -89,7 +99,8 @@ const addRoll = async (roll: string, roll_name: string, bookId: any) => {
     return null;
   }
 };
-const addEntry = async (entry_name: string, rollId: any) => {
+
+export const addEntryByRollId = async (entry_name: string, rollId: any) => {
   try {
     const newEntry = await prisma.entry.create({
       data: {
@@ -104,66 +115,80 @@ const addEntry = async (entry_name: string, rollId: any) => {
   }
 };
 
-// Step 1: read the csv file
-// const csvFilePath = 'example.csv';
-const csvFilePath = 'Entries.csv';
+const importEntriesByCSV = async () => {
+  // Step 1: read the csv file
+  // const csvFilePath = 'example.csv';
+  const csvFilePath = 'Entries.csv';
 
-const parser = parse({
-  columns: true, // Assumes the first row of the CSV are headers
-  delimiter: ',', // Specifies the delimiter character
-});
-
-// Step 2: create the entry list with roll, roll_name, title, version, author
-const entryList: Entry[] = []; // List to hold the records
-
-console.log('Reading CSV file...');
-createReadStream(csvFilePath)
-  .pipe(parser)
-  .on('data', async (record: Entry) => {
-    entryList.push(record); // Add each record to the list
-  })
-  .on('end', async () => {
-    console.log('CSV file has been read and parsed:');
-    // console.log(entryList); // Output the list of records
-
-    // Step 3: loop the list and insert the entry to the database
-    // create a new progress bar instance and use shades_classic theme
-    const bar1 = new cliProgress.SingleBar(
-      {},
-      cliProgress.Presets.shades_classic
-    );
-
-    // start the progress bar with a total value of 100 and start value of 0
-    bar1.start(entryList.length, 0);
-    let count = 0;
-
-    // Loop entryList
-    for (const entry of entryList) {
-      const {
-        title,
-        author,
-        version,
-        roll,
-        rollName,
-        entry: entryName,
-      } = entry;
-      // Step 4: check the book is exist.
-      const bookId = await addBook(title, author, version);
-
-      // Step 5: check the roll is exist.
-      const rollId = await addRoll(roll, rollName, bookId);
-
-      // Step 6: insert the entry with roll_id
-      const newEntry = await addEntry(entryName, rollId);
-
-      // Output the entry
-      // console.log(`Added entry: ${newEntry}`);
-      bar1.update(++count);
-    }
-
-    // stop the progress bar
-    bar1.stop();
-  })
-  .on('error', async (error) => {
-    console.error('Error reading CSV file:', error);
+  const parser = parse({
+    columns: true, // Assumes the first row of the CSV are headers
+    delimiter: ',', // Specifies the delimiter character
   });
+
+  // Step 2: create the entry list with roll, roll_name, title, version, author
+  const entryList: Entry[] = []; // List to hold the records
+
+  console.log('Reading CSV file...');
+  createReadStream(csvFilePath)
+    .pipe(parser)
+    .on('data', async (record: Entry) => {
+      entryList.push(record); // Add each record to the list
+    })
+    .on('end', async () => {
+      console.log('CSV file has been read and parsed:');
+      // console.log(entryList); // Output the list of records
+
+      // Step 3: loop the list and insert the entry to the database
+      // create a new progress bar instance and use shades_classic theme
+      const bar1 = new cliProgress.SingleBar(
+        {},
+        cliProgress.Presets.shades_classic
+      );
+
+      // start the progress bar with a total value of 100 and start value of 0
+      bar1.start(entryList.length, 0);
+      let count = 0;
+
+      // Loop entryList
+      for (const entry of entryList) {
+        const {
+          title,
+          author,
+          version,
+          roll,
+          rollName,
+          source,
+          entry: entryName,
+        } = entry;
+        // Step 4: check the book is exist.
+        const bookId = await addBookAndGetBookId(
+          title,
+          author,
+          version,
+          source
+        );
+
+        // Step 5: check the roll is exist.
+        const rollId = await addRollByBookIdAndGetRollId(
+          roll,
+          rollName,
+          bookId
+        );
+
+        // Step 6: insert the entry with roll_id
+        const newEntry = await addEntryByRollId(entryName, rollId);
+
+        // Output the entry
+        // console.log(`Added entry: ${newEntry}`);
+        bar1.update(++count);
+      }
+
+      // stop the progress bar
+      bar1.stop();
+    })
+    .on('error', async (error) => {
+      console.error('Error reading CSV file:', error);
+    });
+};
+
+// importEntriesByCSV();

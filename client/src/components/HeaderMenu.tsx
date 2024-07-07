@@ -66,9 +66,11 @@ const HeaderMenu: React.FC = () => {
             )}
           </Nav>
           <Nav>
-            <Navbar.Text style={{ color: 'white' }} className="me-4">
-              {userName}
-            </Navbar.Text>
+            {isLogin && (
+              <Navbar.Text style={{ color: 'white' }} className="me-4">
+                {userName}
+              </Navbar.Text>
+            )}
             {isLogin ? (
               <Nav.Link onClick={handleLogout} className="ml-auto">
                 Logout
