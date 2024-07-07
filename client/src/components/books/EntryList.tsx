@@ -59,8 +59,12 @@ const EntryList = () => {
   };
 
   const handleAuthorSearch = (author: string) => {
+    // Get the name of the author
+    // e.g., 王禕(1322-1373) -> 王禕
+    const authorName = author.split('(')[0];
+
     // URL
-    const searchQuery = `bookAuthor=${author}`;
+    const searchQuery = `bookAuthor=${authorName}`;
     const url = `/book/list/${pageSize}/1/${searchQuery}`;
 
     // Redirect to the search page

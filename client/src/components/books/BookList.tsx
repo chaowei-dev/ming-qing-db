@@ -63,8 +63,10 @@ const BookList = () => {
 
   // Use author name to search for books
   const handleAuthorSearch = (author: string) => {
+    const authorName = author.split('(')[0];
+
     // URL
-    const searchQuery = `bookAuthor=${author}`;
+    const searchQuery = `bookAuthor=${authorName}`;
     const url = `/book/list/${pageSize}/1/${searchQuery}`;
 
     // Redirect to the search page
