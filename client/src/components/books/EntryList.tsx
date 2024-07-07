@@ -157,7 +157,6 @@ const EntryList = () => {
         <Col className="d-flex justify-content-end">
           <PageNumOption
             pageSize={pageSize}
-            pageNum={pageNum}
             keyword={keyword!}
             pageCategory="entry"
           />

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 
 interface PageNumOptionProps {
   pageSize: number;
-  pageNum: number;
   keyword: string;
   pageCategory: pageCategoryType;
 }
@@ -12,9 +11,8 @@ type pageCategoryType = 'book' | 'entry';
 
 const PageNumOption: React.FC<PageNumOptionProps> = ({
   pageSize,
-  pageNum,
   keyword,
-  pageCategory
+  pageCategory,
 }) => {
   const [pageCurrentSize, setPageCurrentSize] = useState<number>(0);
 
@@ -24,8 +22,8 @@ const PageNumOption: React.FC<PageNumOptionProps> = ({
 
   // console.log(`PageSize: ${pageSize}`);
 
-  const handlePageLimitChange = (newPage: string) => {
-    const url = `/${pageCategory}/list/${parseInt(newPage)}/${pageNum}/${keyword}`;
+  const handlePageLimitChange = (newPageSize: string) => {
+    const url = `/${pageCategory}/list/${parseInt(newPageSize)}/1/${keyword}`;
 
     window.location.href = url;
   };
