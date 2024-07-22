@@ -135,20 +135,34 @@ const BookList = () => {
                 <tr key={book.id}>
                   <td>{serialNum++}</td>
                   <td>
-                    <Button
-                      variant="link"
-                      onClick={() => handleBookDetails(book)}
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleBookDetails(book);
+                      }}
+                      style={{
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
                     >
                       {book.title}
-                    </Button>
+                    </a>
                   </td>
                   <td>
-                    <Button
-                      variant="link"
-                      onClick={() => handleAuthorSearch(book.author)}
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAuthorSearch(book.author);
+                      }}
+                      style={{
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
                     >
                       {book.author}
-                    </Button>
+                    </a>
                   </td>
                   <td>{book.version}</td>
                   <td>{book.source}</td>

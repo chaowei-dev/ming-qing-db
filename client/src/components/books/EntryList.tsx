@@ -125,20 +125,34 @@ const EntryList = () => {
                     <td>{serialNum + index}</td>
                     <td>{entry.entry_name}</td>
                     <td>
-                      <Button
-                        variant="link"
-                        onClick={() => handleBookDetails(entry.bookId)}
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleBookDetails(entry.bookId);
+                        }}
+                        style={{
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                        }}
                       >
                         {entry.title}
-                      </Button>
+                      </a>
                     </td>
                     <td>
-                      <Button
-                        variant="link"
-                        onClick={() => handleAuthorSearch(entry.author)}
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleAuthorSearch(entry.author);
+                        }}
+                        style={{
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                        }}
                       >
                         {entry.author}
-                      </Button>
+                      </a>
                     </td>
                     <td>{entry.roll}</td>
                     <td>{entry.roll_name}</td>
