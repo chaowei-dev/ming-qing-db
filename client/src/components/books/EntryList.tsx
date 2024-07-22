@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { countEntries, fetchEntryList } from '../../services/entryService';
 import CustomPagination from '../CustomPagination';
-import { Container, Row, Col, Table, Button, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Table, Spinner } from 'react-bootstrap';
 import EntrySearch from './EntrySearch';
 import PageNumOption from './PageNumOption';
 
