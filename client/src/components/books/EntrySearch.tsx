@@ -39,15 +39,17 @@ const EntrySearch: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
         globalKeyword: searchParams.get('globalKeyword') ?? '',
       });
     }
-
-    if (keywordForm.globalKeyword) {
-      setGlobalSearch(true);
-    }
   };
 
   useEffect(() => {
     handleInitValue();
   }, [keyword]);
+
+  useEffect(() => {
+    if (keywordForm.globalKeyword) {
+      setGlobalSearch(true);
+    }
+  }, [keywordForm]);
 
   // Handle search
   const handleSearch = () => {
@@ -68,8 +70,8 @@ const EntrySearch: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
   const handleSwitch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGlobalSearch(e.target.checked);
 
-    // Clear the search form
-    if (!e.target.checked) {
+    // Clear the search form when switching to check or uncheck
+    if (e.target.checked) {
       setKeywordForm({
         bookTitle: '',
         rollName: '',
@@ -90,6 +92,7 @@ const EntrySearch: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
             <Form.Control
               type="text"
               value={keywordForm.globalKeyword}
+              onKeyDown={handleKeyDown}
               disabled={!globalSearch}
               onChange={(e) =>
                 setKeywordForm({
@@ -104,6 +107,7 @@ const EntrySearch: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
             <Form.Control
               type="text"
               value={keywordForm.bookTitle}
+              onKeyDown={handleKeyDown}
               disabled={globalSearch}
               onChange={(e) =>
                 setKeywordForm({ ...keywordForm, bookTitle: e.target.value })
