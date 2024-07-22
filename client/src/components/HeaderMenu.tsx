@@ -41,7 +41,7 @@ const HeaderMenu: React.FC = () => {
             height="30"
             className="d-inline-block align-top"
           />{' '}
-          明清書目資料庫
+          明清詩文集篇目索引
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import e, { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import {
   addBookAndGetBookId,
@@ -57,6 +57,121 @@ interface Entry {
   updatedAt: Date;
 }
 
+const buildWhereClause = (searchParams: URLSearchParams) => {
+  const globalKeyword = searchParams.get('globalKeyword') ?? '';
+  const bookTitle = searchParams.get('bookTitle') ?? '';
+  const rollName = searchParams.get('rollName') ?? '';
+  const entryName = searchParams.get('entryName') ?? '';
+  const authorName = searchParams.get('authorName') ?? '';
+
+  let whereClause = {};
+
+  // If global keyword is provided, replace other keywords with it
+  if (globalKeyword) {
+    (whereClause = {
+      OR: [
+        globalKeyword
+          ? {
+              roll: {
+                book: {
+                  title: {
+                    contains: globalKeyword,
+                    mode: 'insensitive', // Case insensitive
+                  },
+                },
+              },
+            }
+          : {},
+        globalKeyword
+          ? {
+              roll: {
+                roll_name: {
+                  contains: globalKeyword,
+                  mode: 'insensitive',
+                },
+              },
+            }
+          : {},
+        globalKeyword
+          ? {
+              entry_name: {
+                contains: globalKeyword,
+                mode: 'insensitive',
+              },
+            }
+          : {},
+        globalKeyword
+          ? {
+              roll: {
+                book: {
+                  author: {
+                    contains: globalKeyword,
+                    mode: 'insensitive',
+                  },
+                },
+              },
+            }
+          : {},
+      ],
+    }),
+      console.log(`Searching... globalKeyword:"${globalKeyword}"`);
+  } else {
+    whereClause = {
+      AND: [
+        bookTitle
+          ? {
+              roll: {
+                book: {
+                  title: {
+                    contains: bookTitle,
+                    mode: 'insensitive', // Case insensitive
+                  },
+                },
+              },
+            }
+          : {},
+        rollName
+          ? {
+              roll: {
+                roll_name: {
+                  contains: rollName,
+                  mode: 'insensitive',
+                },
+              },
+            }
+          : {},
+        entryName
+          ? {
+              entry_name: {
+                contains: entryName,
+                mode: 'insensitive',
+              },
+            }
+          : {},
+        authorName
+          ? {
+              roll: {
+                book: {
+                  author: {
+                    contains: authorName,
+                    mode: 'insensitive',
+                  },
+                },
+              },
+            }
+          : {},
+      ],
+    };
+
+    console.log(
+      `Searching... bookTitle:"${bookTitle}", author:"${authorName}", rollName:"${rollName}", entryName:"${entryName}"`
+    );
+  }
+
+  return whereClause;
+};
+
+// Get entry list with pagination, page size and keyword search
 export const getEntries = async (
   req: Request,
   res: Response
@@ -70,14 +185,7 @@ export const getEntries = async (
 
   // Parse keyword string to object
   const searchParams = new URLSearchParams(keyword);
-  const bookTitle = searchParams.get('bookTitle') ?? '';
-  const rollName = searchParams.get('rollName') ?? '';
-  const entryName = searchParams.get('entryName') ?? '';
-  const authorName = searchParams.get('authorName') ?? '';
-
-  console.log(
-    `Searching... bookTitle:"${bookTitle}", author:"${authorName}", rollName:"${rollName}", entryName:"${entryName}"`
-  );
+  const whereClause = buildWhereClause(searchParams);
 
   try {
     const entries = await prisma.entry.findMany({
@@ -104,52 +212,7 @@ export const getEntries = async (
       skip: offset,
       take: intSize,
       // Filter entries by keyword (if a item is empty, it will be ignored)
-      where: {
-        AND: [
-          bookTitle
-            ? {
-                roll: {
-                  book: {
-                    title: {
-                      contains: bookTitle,
-                      mode: 'insensitive', // Case insensitive
-                    },
-                  },
-                },
-              }
-            : {},
-          rollName
-            ? {
-                roll: {
-                  roll_name: {
-                    contains: rollName,
-                    mode: 'insensitive',
-                  },
-                },
-              }
-            : {},
-          entryName
-            ? {
-                entry_name: {
-                  contains: entryName,
-                  mode: 'insensitive',
-                },
-              }
-            : {},
-          authorName
-            ? {
-                roll: {
-                  book: {
-                    author: {
-                      contains: authorName,
-                      mode: 'insensitive',
-                    },
-                  },
-                },
-              }
-            : {},
-        ],
-      },
+      where: whereClause,
     });
 
     // Flatten the results to match your desired output format
@@ -181,62 +244,16 @@ export const countEntries = async (
   // Parse keyword string to object
   const { keyword } = req.params;
   const searchParams = new URLSearchParams(keyword);
-  const bookTitle = searchParams.get('bookTitle') ?? '';
-  const rollName = searchParams.get('rollName') ?? '';
-  const entryName = searchParams.get('entryName') ?? '';
-  const authorName = searchParams.get('authorName') ?? '';
+  const whereClause = buildWhereClause(searchParams);
 
-  console.log(`Count entries with keyword: ${keyword}`);
+  // If global keyword is provided, replace other keywords with it
 
   try {
     const entriesCount = await prisma.entry.count({
-      where: {
-        AND: [
-          bookTitle
-            ? {
-                roll: {
-                  book: {
-                    title: {
-                      contains: bookTitle,
-                      mode: 'insensitive', // Case insensitive
-                    },
-                  },
-                },
-              }
-            : {},
-          rollName
-            ? {
-                roll: {
-                  roll_name: {
-                    contains: rollName,
-                    mode: 'insensitive',
-                  },
-                },
-              }
-            : {},
-          entryName
-            ? {
-                entry_name: {
-                  contains: entryName,
-                  mode: 'insensitive',
-                },
-              }
-            : {},
-          authorName
-            ? {
-                roll: {
-                  book: {
-                    author: {
-                      contains: authorName,
-                      mode: 'insensitive',
-                    },
-                  },
-                },
-              }
-            : {},
-        ],
-      },
+      where: whereClause,
     });
+
+    console.log(`Counting... entries with keyword: ${entriesCount}`);
 
     res.json(entriesCount);
   } catch (error) {
