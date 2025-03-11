@@ -2,15 +2,25 @@
 
 # to do
 
-[x] Book list
-[x] Pagination of book list
-[ ] Entry list
-[ ] Pagination of entry list
-[ ] Add book
-[ ] Edit book
-[ ] Search books
-[ ] Search entires
-[ ] Book detail (roll, roll_name, entry)
+- backend:
+  [ ] 新增 Category table
+  [ ] 在 Book 新增 FK categoryId
+  [ ] 更新 api for Book/Entry
+  [ ] 新增 api for Category list
+
+
+- frontend:
+  [ ] 新增 Book page and Menu bar
+  [ ]更新書目列表頁面（table + search）
+  [ ] 更新篇目列表頁面（table + search）
+  [ ] 更新匯入篇目功能
+
+- 預計建置的資料庫謹備忘如下：
+  [ ] 明清詩文集篇目索引。（已建置）
+  [ ] 四川巴縣縣署檔案目錄。（已有資料）
+  [ ] 順天府檔案目錄。（已有資料）
+  [ ] 南部縣檔案目錄。（資料取得中）
+  [ ] 大清律例根原全文資料庫。（資料取得中）
 
 # Function
 
