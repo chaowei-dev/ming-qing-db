@@ -5,7 +5,7 @@
 - backend:
   [x] 新增 Category table
   [x] 在 Book 新增 FK categoryId
-  [ ] 更新所有 book 的 categoryId to "明清詩文集篇目索引"
+  [x] 更新所有 book 的 categoryId to "明清詩文集篇目索引" `npx prisma migrate deploy`
   [ ] 更新 api for Book/Entry
   [ ] 新增 api for Category list
 
