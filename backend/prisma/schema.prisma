@@ -25,6 +25,14 @@ enum Role {
   USER
 }
 
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  books     Book[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Book {
   id        Int      @id @default(autoincrement())
   title     String
@@ -32,6 +40,8 @@ model Book {
   version   String
   source    String
   rolls     Roll[]
+  categoryId Int?
+  category  Category? @relation(fields: [categoryId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

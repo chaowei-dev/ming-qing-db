@@ -3,8 +3,9 @@
 # to do
 
 - backend:
-  [ ] 新增 Category table
-  [ ] 在 Book 新增 FK categoryId
+  [x] 新增 Category table
+  [x] 在 Book 新增 FK categoryId
+  [ ] 更新所有 book 的 categoryId to "明清詩文集篇目索引"
   [ ] 更新 api for Book/Entry
   [ ] 新增 api for Category list
 
