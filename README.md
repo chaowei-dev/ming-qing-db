@@ -43,17 +43,21 @@
 
 # Database Structure
 
+- Category
+  | id | name | createdAt | updatedAt |
+  | -- | ---- | --------- | --------- |
+
 - Book
-  | book_id | title | author | version | source | remarks | created_by | updated_by |
-  | ------- | ----- | ------ | ------- | ------ | ------- | ---------- | ---------- |
+  | id | title | author | version | source | remarks | createAt | updatedAt | categoryId |
+  | -- | ----- | ------ | ------- | ------ | ------- | -------- | --------- | ---------- |
 
 - Roll
-  | roll_id | roll | roll_name | created_by | updated_by | book_id |
-  | ------- | ---- | --------- | ---------- | ---------- | ------- |
+  | id | roll | roll_name | createAt | updatedAt | bookId |
+  | -- | ---- | --------- | -------- | --------- | ------ |
 
 - Entry
-  | entry_id | entry | remarks | created_by | updated_by | roll_id |
-  | -------- | ----- | ------- | ---------- | ---------- | ------- |
+  | id | entry | remarks | createAt | updatedAt | rollId |
+  | -- | ----- | ------- | -------- | --------- | ------ |
 
 # Project Structure
 
