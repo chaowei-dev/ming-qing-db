@@ -14,6 +14,9 @@ interface Book {
   source: string;
   createBy: string;
   updateBy: string;
+  category?: {
+    name: string;
+  };
 }
 
 const BookList = () => {
@@ -22,6 +25,7 @@ const BookList = () => {
     pageSize?: string;
     pageNum?: string;
     keyword?: string;
+    categoryId?: string;
   }>();
 
   // Use state
@@ -38,7 +42,11 @@ const BookList = () => {
 
   // Fetch book list from server
   const getBookList = async () => {
-    const response = await fetchBookList(pageSize, pageNum, keyword!);
+    const response = await fetchBookList(
+      pageSize,
+      pageNum,
+      keyword!,
+    );
     setBookList(response);
   };
 
@@ -128,6 +136,7 @@ const BookList = () => {
                 <th>作者</th>
                 <th>版本</th>
                 <th>來源</th>
+                <th>分類</th>
               </tr>
             </thead>
             <tbody>
@@ -166,6 +175,7 @@ const BookList = () => {
                   </td>
                   <td>{book.version}</td>
                   <td>{book.source}</td>
+                  <td>{book.category?.name}</td>
                 </tr>
               ))}
             </tbody>

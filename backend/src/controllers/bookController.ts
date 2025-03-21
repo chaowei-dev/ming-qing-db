@@ -25,6 +25,7 @@ export const getBooks = async (req: Request, res: Response): Promise<void> => {
   const bookTitle = searchParams.get('bookTitle') ?? '';
   const bookAuthor = searchParams.get('bookAuthor') ?? '';
   const bookSource = searchParams.get('bookSource') ?? '';
+  const categoryId = searchParams.get('categoryId') ?? '';
 
   // log
   console.log(`size: ${size}, page: ${page}, keyword: ${keyword}`);
@@ -44,8 +45,18 @@ export const getBooks = async (req: Request, res: Response): Promise<void> => {
           bookSource
             ? { source: { contains: bookSource, mode: 'insensitive' } }
             : {},
+          categoryId
+            ? { categoryId: Number(categoryId) }
+            : {},
         ],
       },
+      include: {
+        category: {
+          select: {
+            name: true
+          }
+        }
+      }
     });
 
     res.json(books);
@@ -77,6 +88,7 @@ export const getBookCount = async (req: Request, res: Response) => {
   const bookTitle = searchParams.get('bookTitle') ?? '';
   const bookAuthor = searchParams.get('bookAuthor') ?? '';
   const bookSource = searchParams.get('bookSource') ?? '';
+  const categoryId = searchParams.get('categoryId') ?? '';
 
   try {
     const count = await prisma.book.count({
@@ -90,6 +102,9 @@ export const getBookCount = async (req: Request, res: Response) => {
             : {},
           bookSource
             ? { source: { contains: bookSource, mode: 'insensitive' } }
+            : {},
+          categoryId
+            ? { categoryId: Number(categoryId) }
             : {},
         ],
       },

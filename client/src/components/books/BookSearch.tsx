@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Col, InputGroup, Row, Form, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { fetchCategories } from '../../services/categoryService';
+
+interface Category {
+  id: number;
+  name: string;
+}
 
 interface BookSearchProps {
   bookTitle: string;
   bookAuthor: string;
   bookSource: string;
+  category_id: string;
 }
 
 interface FormProps {
@@ -14,11 +21,25 @@ interface FormProps {
 }
 
 const BookSearch: React.FC<FormProps> = ({ pageSize, keyword }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [bookKeywordForm, setBookKeywordForm] = useState<BookSearchProps>({
     bookTitle: '',
     bookAuthor: '',
     bookSource: '',
+    category_id: '',
   });
+
+  useEffect(() => {
+    const getCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    getCategories();
+  }, []);
 
   const navigate = useNavigate();
 
@@ -30,6 +51,7 @@ const BookSearch: React.FC<FormProps> = ({ pageSize, keyword }) => {
         bookTitle: searchParams.get('bookTitle') ?? '',
         bookAuthor: searchParams.get('bookAuthor') ?? '',
         bookSource: searchParams.get('bookSource') ?? '',
+        category_id: searchParams.get('category_id') ?? '',
       });
     }
   };
@@ -41,7 +63,7 @@ const BookSearch: React.FC<FormProps> = ({ pageSize, keyword }) => {
   // Handle search
   const handleSearch = () => {
     // Combine all the search parameters and send them to the server
-    const searchQuery = `bookTitle=${bookKeywordForm.bookTitle}&bookAuthor=${bookKeywordForm.bookAuthor}&bookSource=${bookKeywordForm.bookSource}`;
+    const searchQuery = `bookTitle=${bookKeywordForm.bookTitle}&bookAuthor=${bookKeywordForm.bookAuthor}&bookSource=${bookKeywordForm.bookSource}&categoryId=${bookKeywordForm.category_id}`;
 
     // Redirect to the search page
     const url = `/book/list/${pageSize}/1/${searchQuery}`;
@@ -98,6 +120,25 @@ const BookSearch: React.FC<FormProps> = ({ pageSize, keyword }) => {
               }
               onKeyDown={handleKeyDown}
             />
+          </InputGroup>
+          <InputGroup size="sm">
+            <InputGroup.Text>分類</InputGroup.Text>
+            <Form.Select
+              value={bookKeywordForm.category_id}
+              onChange={(e) =>
+                setBookKeywordForm({
+                  ...bookKeywordForm,
+                  category_id: e.target.value,
+                })
+              }
+            >
+              <option value="">全部</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Form.Select>
           </InputGroup>
         </Col>
         <Col xs="auto">
