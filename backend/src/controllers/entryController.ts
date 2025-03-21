@@ -342,7 +342,13 @@ export const addEntry = async (req: Request, res: Response): Promise<void> => {
     // Step 2: Check book is exist or not by title, author, version, source
     // If not exist, create new book, then get book id
     // If exist, get book id
-    const bookId = await addBookAndGetBookId(title, author, version, source, categoryId);
+    const bookId = await addBookAndGetBookId(
+      title,
+      author,
+      version,
+      source,
+      categoryId ? Number(categoryId) : undefined
+    );
 
     if (!bookId) {
       res.status(500).send('Failed to add book');

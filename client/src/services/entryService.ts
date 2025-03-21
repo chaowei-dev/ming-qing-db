@@ -8,6 +8,7 @@ interface EntryWithBookAndRoll {
   roll: string;
   rollName: string;
   entry: string;
+  categoryId?: string;
 }
 
 // api: http://localhost:3001/entries/list/:size/:page/:keyword
@@ -56,6 +57,23 @@ export const addEntry = async (entry: EntryWithBookAndRoll) => {
     return response.data;
   } catch (error) {
     console.error('Add entries failed:', error);
+    throw error;
+  }
+};
+
+export const importEntries = async (entries: EntryWithBookAndRoll[], categoryId: string) => {
+  try {
+    const response = await axios.post('/entries/import', {
+      entries,
+      categoryId
+    }, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Import entries failed:', error);
     throw error;
   }
 };

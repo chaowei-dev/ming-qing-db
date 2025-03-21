@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Container,
   Row,
@@ -7,8 +7,16 @@ import {
   Card,
   ProgressBar,
   Table,
+  Form,
+  InputGroup,
 } from 'react-bootstrap';
 import { addEntry } from '../../services/entryService';
+import { fetchCategories } from '../../services/categoryService';
+
+interface Category {
+  id: number;
+  name: string;
+}
 
 interface EntryWithBookAndRoll {
   title: string;
@@ -28,6 +36,21 @@ const ImportEntries = () => {
   const [errorUploadData, setErrorUploadData] = useState<
     EntryWithBookAndRoll[]
   >([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+
+  // Fetch categories
+  useEffect(() => {
+    const getCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        setCategories(data.sort((a: Category, b: Category) => a.id - b.id));
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    getCategories();
+  }, []);
 
   // Read CSV file and parse data
   const handleFileSelect = (selectedFile: File | null) => {
@@ -71,7 +94,14 @@ const ImportEntries = () => {
 
   // Upload data to backend
   const handleDataUpload = async () => {
-    if (dataList.length === 0) return;
+    if (dataList.length === 0) {
+      setUploadStatus('請先選擇檔案');
+      return;
+    }
+    if (!selectedCategoryId) {
+      setUploadStatus('請選擇分類');
+      return;
+    }
 
     // Set upload status
     handleUploadStatus('uploading');
@@ -80,7 +110,10 @@ const ImportEntries = () => {
     for (let i = 0; i < dataList.length; i++) {
       try {
         // Add entry with API
-        await addEntry(dataList[i]);
+        await addEntry({
+          ...dataList[i],
+          categoryId: selectedCategoryId,
+        });
 
         // Update currentData
         setSucessDataCount(i + 1);
@@ -121,6 +154,25 @@ const ImportEntries = () => {
       </Row>
       {/* File upload */}
       <Row className="justify-content-md-center mt-5">
+        <Col xs lg="2" className="align-self-center">
+          <InputGroup size="sm">
+            <InputGroup.Text>分類</InputGroup.Text>
+            <Form.Select
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              disabled={uploadStatus === 'uploading'}
+            >
+              <option value="">選擇分類</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Form.Select>
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row className="justify-content-md-center mt-5">
         <Col xs lg="2" className="align-self-center"></Col>
         <Col xs lg="2">
           <div>
@@ -131,7 +183,7 @@ const ImportEntries = () => {
               onChange={(e) =>
                 handleFileSelect(e.target.files ? e.target.files[0] : null)
               }
-              disabled={uploadStatus === 'uploading'}
+              disabled={!selectedCategoryId || uploadStatus === 'uploading'}
             />
           </div>
         </Col>
@@ -139,7 +191,7 @@ const ImportEntries = () => {
           <Button
             variant="primary"
             onClick={handleDataUpload}
-            disabled={uploadStatus === 'uploading'}
+            disabled={!selectedCategoryId || uploadStatus === 'uploading'}
           >
             匯入
           </Button>
