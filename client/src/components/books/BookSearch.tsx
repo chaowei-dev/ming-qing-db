@@ -33,7 +33,7 @@ const BookSearch: React.FC<FormProps> = ({ pageSize, keyword }) => {
     const getCategories = async () => {
       try {
         const data = await fetchCategories();
-        setCategories(data);
+        setCategories(data.sort((a: Category, b: Category) => a.id - b.id));
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
