@@ -35,17 +35,19 @@ const Home = () => {
         {/* categories 連結，改用垂直排列的按鈕並置中 */}
         <Col md={8} className="mt-5">
           <div className="two d-flex flex-column align-items-center">
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                href={`entry/list/50/1/globalKeyword=&bookTitle=&rollName=&entryName=&authorName=&categoryId=${category.id}`}
-                variant="outline-primary"
-                className="mb-5"
-                size="lg"
-              >
-                {category.name}
-              </Button>
-            ))}
+            {[...categories]
+              .sort((a, b) => a.id - b.id)
+              .map((category) => (
+                <Button
+                  key={category.id}
+                  href={`entry/list/50/1/globalKeyword=&bookTitle=&rollName=&entryName=&authorName=&categoryId=${category.id}`}
+                  variant="outline-primary"
+                  className="mb-5"
+                  size="lg"
+                >
+                  {category.name}
+                </Button>
+              ))}
           </div>
         </Col>
 
