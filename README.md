@@ -6,14 +6,14 @@
   [x] 新增 Category table
   [x] 在 Book 新增 FK categoryId
   [x] 更新所有 book 的 categoryId to "明清詩文集篇目索引" `npx prisma migrate deploy`
-  [ ] 更新 api for Book/Entry
-  [ ] 新增 api for Category list
+  [x] 更新 api for Book/Entry
+  [x] 新增 api for Category list
 
 
 - frontend:
-  [ ] 新增 Book page and Menu bar
-  [ ]更新書目列表頁面（table + search）
-  [ ] 更新篇目列表頁面（table + search）
+  [ ] 新增 Category page and Menu bar
+  [x] 更新書目列表頁面（table + search）
+  [x] 更新篇目列表頁面（table + search）
   [ ] 更新匯入篇目功能
 
 - 預計建置的資料庫謹備忘如下：
