@@ -12,7 +12,7 @@ interface BookSearchProps {
   bookTitle: string;
   bookAuthor: string;
   bookSource: string;
-  category_id: string;
+  categoryId: string;
 }
 
 interface FormProps {
@@ -26,7 +26,7 @@ const BookSearch: React.FC<FormProps> = ({ pageSize, keyword }) => {
     bookTitle: '',
     bookAuthor: '',
     bookSource: '',
-    category_id: '',
+    categoryId: '',
   });
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const BookSearch: React.FC<FormProps> = ({ pageSize, keyword }) => {
         bookTitle: searchParams.get('bookTitle') ?? '',
         bookAuthor: searchParams.get('bookAuthor') ?? '',
         bookSource: searchParams.get('bookSource') ?? '',
-        category_id: searchParams.get('category_id') ?? '',
+        categoryId: searchParams.get('categoryId') ?? '',
       });
     }
   };
@@ -63,7 +63,7 @@ const BookSearch: React.FC<FormProps> = ({ pageSize, keyword }) => {
   // Handle search
   const handleSearch = () => {
     // Combine all the search parameters and send them to the server
-    const searchQuery = `bookTitle=${bookKeywordForm.bookTitle}&bookAuthor=${bookKeywordForm.bookAuthor}&bookSource=${bookKeywordForm.bookSource}&categoryId=${bookKeywordForm.category_id}`;
+    const searchQuery = `bookTitle=${bookKeywordForm.bookTitle}&bookAuthor=${bookKeywordForm.bookAuthor}&bookSource=${bookKeywordForm.bookSource}&categoryId=${bookKeywordForm.categoryId}`;
 
     // Redirect to the search page
     const url = `/book/list/${pageSize}/1/${searchQuery}`;
@@ -80,6 +80,25 @@ const BookSearch: React.FC<FormProps> = ({ pageSize, keyword }) => {
     <Form>
       <Row>
         <Col>
+          <InputGroup size="sm">
+            <InputGroup.Text>分類</InputGroup.Text>
+            <Form.Select
+              value={bookKeywordForm.categoryId}
+              onChange={(e) =>
+                setBookKeywordForm({
+                  ...bookKeywordForm,
+                  categoryId: e.target.value,
+                })
+              }
+            >
+              <option value="">全部</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Form.Select>
+          </InputGroup>
           <InputGroup size="sm">
             <InputGroup.Text>書目</InputGroup.Text>
             <Form.Control
@@ -120,25 +139,6 @@ const BookSearch: React.FC<FormProps> = ({ pageSize, keyword }) => {
               }
               onKeyDown={handleKeyDown}
             />
-          </InputGroup>
-          <InputGroup size="sm">
-            <InputGroup.Text>分類</InputGroup.Text>
-            <Form.Select
-              value={bookKeywordForm.category_id}
-              onChange={(e) =>
-                setBookKeywordForm({
-                  ...bookKeywordForm,
-                  category_id: e.target.value,
-                })
-              }
-            >
-              <option value="">全部</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </Form.Select>
           </InputGroup>
         </Col>
         <Col xs="auto">
