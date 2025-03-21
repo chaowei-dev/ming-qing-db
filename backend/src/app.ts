@@ -3,6 +3,7 @@ import passport from 'passport';
 import authRoutes from './routes/authRoutes';
 import bookRoutes from './routes/bookRoutes';
 import entryRoutes from './routes/entryRoutes';
+import categoryRoutes from './routes/categoryRoutes';
 import './passportConfig';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -29,8 +30,9 @@ app.use(passport.initialize());
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/entries', entryRoutes);
+app.use('/api/categories', categoryRoutes);
 
-const PORT = 3001 || process.env.PORT;
+const PORT = Number(process.env.PORT) || 3001;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
