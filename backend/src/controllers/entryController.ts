@@ -26,6 +26,11 @@ interface EntryWithBookAndRoll {
   rollId: number;
   roll_name: string;
   title: string;
+  author: string;
+  category?: {
+    id: number;
+    name: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -63,6 +68,7 @@ const buildWhereClause = (searchParams: URLSearchParams) => {
   const rollName = searchParams.get('rollName') ?? '';
   const entryName = searchParams.get('entryName') ?? '';
   const authorName = searchParams.get('authorName') ?? '';
+  const categoryId = searchParams.get('categoryId') ?? '';
 
   let whereClause = {};
 
@@ -160,6 +166,15 @@ const buildWhereClause = (searchParams: URLSearchParams) => {
               },
             }
           : {},
+        categoryId
+          ? {
+              roll: {
+                book: {
+                  categoryId: Number(categoryId),
+                },
+              },
+            }
+          : {},
       ],
     };
 
@@ -202,6 +217,12 @@ export const getEntries = async (
                 title: true,
                 id: true,
                 author: true,
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -225,6 +246,7 @@ export const getEntries = async (
       title: entry.roll.book.title,
       author: entry.roll.book.author,
       bookId: entry.roll.book.id,
+      category: entry.roll.book.category,
       createdAt: entry.createdAt.toISOString(),
       updatedAt: entry.updatedAt.toISOString(),
     }));
@@ -314,13 +336,13 @@ export const getBookWithDetails = async (
 // Add entry
 export const addEntry = async (req: Request, res: Response): Promise<void> => {
   // Step 1: Parse the request body
-  const { title, author, source, version, roll, rollName, entry } = req.body;
+  const { title, author, source, version, roll, rollName, entry, categoryId } = req.body;
 
   try {
     // Step 2: Check book is exist or not by title, author, version, source
     // If not exist, create new book, then get book id
     // If exist, get book id
-    const bookId = await addBookAndGetBookId(title, author, version, source);
+    const bookId = await addBookAndGetBookId(title, author, version, source, categoryId);
 
     if (!bookId) {
       res.status(500).send('Failed to add book');

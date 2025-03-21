@@ -15,6 +15,10 @@ interface Entry {
   title: string;
   author: string;
   bookId: number;
+  category?: {
+    id: number;
+    name: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -117,6 +121,7 @@ const EntryList = () => {
                   <th>作者</th>
                   <th>卷次</th>
                   <th>卷名</th>
+                  <th>分類</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,6 +161,7 @@ const EntryList = () => {
                     </td>
                     <td>{entry.roll}</td>
                     <td>{entry.roll_name}</td>
+                    <td>{entry.category?.name || '無分類'}</td>
                   </tr>
                 ))}
               </tbody>

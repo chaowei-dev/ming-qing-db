@@ -31,7 +31,8 @@ export const addBookAndGetBookId = async (
   title: string,
   author: string,
   version: string,
-  source: string
+  source: string,
+  categoryId?: number
 ) => {
   try {
     // i: check book exist
@@ -55,6 +56,7 @@ export const addBookAndGetBookId = async (
         author,
         version,
         source,
+        categoryId: categoryId ? Number(categoryId) : null,
       },
     });
 

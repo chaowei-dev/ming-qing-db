@@ -116,7 +116,22 @@ export const getBookCount = async (req: Request, res: Response) => {
 };
 
 export const addBook = async (req: Request, res: Response) => {
-  const { title, author, version, source } = req.body;
+  const { title, author, version, source, categoryName } = req.body;
+  let categoryId = null;
+  
+  if (categoryName) {
+    const category = await prisma.category.findFirst({
+      where: {
+        name: categoryName
+      }
+    });
+    
+    if (!category) {
+      return res.status(400).json({ message: 'Category not found' });
+    }
+    
+    categoryId = category.id;
+  }
   try {
     const newBook = await prisma.book.create({
       data: {
@@ -124,6 +139,7 @@ export const addBook = async (req: Request, res: Response) => {
         author,
         version,
         source,
+        categoryId,
       },
     });
     res.status(201).json(newBook);

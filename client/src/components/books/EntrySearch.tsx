@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Form, InputGroup, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { fetchCategories } from '../../services/categoryService';
+
+interface Category {
+  id: number;
+  name: string;
+}
 
 interface FormProps {
   bookTitle: string;
@@ -8,6 +14,7 @@ interface FormProps {
   entryName: string;
   authorName: string;
   globalKeyword: string;
+  categoryId: string;
 }
 
 interface SearchFormProps {
@@ -16,13 +23,27 @@ interface SearchFormProps {
 }
 
 const EntrySearch: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [keywordForm, setKeywordForm] = useState<FormProps>({
     bookTitle: '',
     rollName: '',
     entryName: '',
     authorName: '',
     globalKeyword: '',
+    categoryId: '',
   });
+
+  useEffect(() => {
+    const getCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    getCategories();
+  }, []);
   const [globalSearch, setGlobalSearch] = useState<boolean>(false);
 
   const navigate = useNavigate();
@@ -37,6 +58,7 @@ const EntrySearch: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
         entryName: searchParams.get('entryName') ?? '',
         authorName: searchParams.get('authorName') ?? '',
         globalKeyword: searchParams.get('globalKeyword') ?? '',
+        categoryId: searchParams.get('categoryId') ?? '',
       });
     }
   };
@@ -54,7 +76,7 @@ const EntrySearch: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
   // Handle search
   const handleSearch = () => {
     // Combine all the search parameters and send them to the server
-    const searchQuery = `globalKeyword=${keywordForm.globalKeyword}&bookTitle=${keywordForm.bookTitle}&rollName=${keywordForm.rollName}&entryName=${keywordForm.entryName}&authorName=${keywordForm.authorName}`;
+    const searchQuery = `globalKeyword=${keywordForm.globalKeyword}&bookTitle=${keywordForm.bookTitle}&rollName=${keywordForm.rollName}&entryName=${keywordForm.entryName}&authorName=${keywordForm.authorName}&categoryId=${keywordForm.categoryId}`;
 
     // Redirect to the search page
     const url = `/entry/list/${pageSize}/1/${searchQuery}`;
@@ -78,6 +100,7 @@ const EntrySearch: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
         entryName: '',
         authorName: '',
         globalKeyword: '',
+        categoryId: '',
       });
     }
   };
@@ -87,6 +110,23 @@ const EntrySearch: React.FC<SearchFormProps> = ({ pageSize, keyword }) => {
       <Row>
         <Col>
           {/* Input */}
+          <InputGroup size="sm">
+            <InputGroup.Text>分類</InputGroup.Text>
+            <Form.Select
+              value={keywordForm.categoryId}
+              disabled={globalSearch}
+              onChange={(e) =>
+                setKeywordForm({ ...keywordForm, categoryId: e.target.value })
+              }
+            >
+              <option value="">全部</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Form.Select>
+          </InputGroup>
           <InputGroup size="sm">
             <InputGroup.Text>全域</InputGroup.Text>
             <Form.Control
