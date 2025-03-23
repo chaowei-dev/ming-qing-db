@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { countEntries, fetchEntryList } from '../../services/entryService';
 import CustomPagination from '../CustomPagination';
-import { Container, Row, Col, Table, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Table } from 'react-bootstrap';
 import EntrySearch from './EntrySearch';
 import PageNumOption from './PageNumOption';
 
@@ -33,17 +33,14 @@ const EntryList = () => {
   const [entryList, setEntryList] = useState<Entry[]>([]);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalEntries, setTotalEntries] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const pageSize = parseInt(params.pageSize ?? '10');
   const pageNum = parseInt(params.pageNum ?? '1');
   const keyword = params.keyword;
 
   const getEntryList = async () => {
-    setIsLoading(true);
     const response = await fetchEntryList(pageSize, pageNum, keyword!);
     setEntryList(response);
-    setIsLoading(false);
   };
 
   const handleTotalPages = async () => {
