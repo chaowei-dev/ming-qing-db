@@ -112,24 +112,24 @@ const EntryList = () => {
               </Spinner>
             </div>
           ) : (
-            <Table striped bordered hover>
+            <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th>編號</th>
-                  <th>篇目</th>
-                  <th>書目</th>
-                  <th>作者</th>
-                  <th>卷次</th>
-                  <th>卷名</th>
-                  <th>分類</th>
+                  <th style={{ width: '5%' }}>編號</th>
+                  <th style={{ width: '20%' }}>篇目</th>
+                  <th style={{ width: '20%' }}>書目</th>
+                  <th style={{ width: '15%' }}>作者</th>
+                  <th style={{ width: '10%' }}>卷次</th>
+                  <th style={{ width: '15%' }}>卷名</th>
+                  <th style={{ width: '15%' }}>分類</th>
                 </tr>
               </thead>
               <tbody>
                 {entryList.map((entry, index) => (
                   <tr key={entry.id}>
-                    <td>{serialNum + index}</td>
-                    <td>{entry.entry_name}</td>
-                    <td>
+                    <td style={{ width: '5%' }}>{serialNum + index}</td>
+                    <td style={{ width: '20%' }}>{entry.entry_name}</td>
+                    <td style={{ width: '20%' }}>
                       <a
                         href="#"
                         onClick={(e) => {
@@ -144,7 +144,7 @@ const EntryList = () => {
                         {entry.title}
                       </a>
                     </td>
-                    <td>
+                    <td style={{ width: '15%' }}>
                       <a
                         href="#"
                         onClick={(e) => {
@@ -159,9 +159,9 @@ const EntryList = () => {
                         {entry.author}
                       </a>
                     </td>
-                    <td>{entry.roll}</td>
-                    <td>{entry.roll_name}</td>
-                    <td>{entry.category?.name || '無分類'}</td>
+                    <td style={{ width: '10%' }}>{entry.roll}</td>
+                    <td style={{ width: '15%' }}>{entry.roll_name}</td>
+                    <td style={{ width: '15%' }}>{entry.category?.name || '無分類'}</td>
                   </tr>
                 ))}
               </tbody>

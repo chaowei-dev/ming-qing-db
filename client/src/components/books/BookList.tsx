@@ -128,22 +128,22 @@ const BookList = () => {
       </Row>
       <Row className="mt-4">
         <Col>
-          <Table striped bordered hover>
+          <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr>
-                <th>編號</th>
-                <th>書名</th>
-                <th>作者</th>
-                <th>版本</th>
-                <th>來源</th>
-                <th>分類</th>
+                <th style={{ width: '5%' }}>編號</th>
+                <th style={{ width: '30%' }}>書名</th>
+                <th style={{ width: '20%' }}>作者</th>
+                <th style={{ width: '10%' }}>版本</th>
+                <th style={{ width: '20%' }}>來源</th>
+                <th style={{ width: '15%' }}>分類</th>
               </tr>
             </thead>
             <tbody>
               {bookList.map((book) => (
                 <tr key={book.id}>
-                  <td>{serialNum++}</td>
-                  <td>
+                  <td style={{ width: '5%' }}>{serialNum++}</td>
+                  <td style={{ width: '30%' }}>
                     <a
                       href="#"
                       onClick={(e) => {
@@ -158,7 +158,7 @@ const BookList = () => {
                       {book.title}
                     </a>
                   </td>
-                  <td>
+                  <td style={{ width: '20%' }}>
                     <a
                       href="#"
                       onClick={(e) => {
@@ -173,9 +173,9 @@ const BookList = () => {
                       {book.author}
                     </a>
                   </td>
-                  <td>{book.version}</td>
-                  <td>{book.source}</td>
-                  <td>{book.category?.name}</td>
+                  <td style={{ width: '10%' }}>{book.version}</td>
+                  <td style={{ width: '20%' }}>{book.source}</td>
+                  <td style={{ width: '15%' }}>{book.category?.name}</td>
                 </tr>
               ))}
             </tbody>
