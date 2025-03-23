@@ -50,9 +50,9 @@ const CustomPagination: React.FC<CustomPaginationProps> = ({
             <div className="d-flex align-items-center ms-1 me-1">
               <Form.Control
                 type="number"
-                min="1"
+                min="0"
                 max={totalPages}
-                value={currentPage}
+                value={totalPages === 0 ? 0 : currentPage}
                 onChange={(e) => handlePageChange(Number(e.target.value))}
                 className="text-center"
                 style={{ width: '100px' }}
