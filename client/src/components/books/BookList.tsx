@@ -82,7 +82,7 @@ const BookList = () => {
   };
 
   // Create Pagination component
-  const paginationComponent = (
+  const paginationComponent = bookList.length > 0 ? (
     <CustomPagination
       category="book"
       totalPages={totalPages}
@@ -91,7 +91,7 @@ const BookList = () => {
       keyword={keyword}
       itemCount={totalBooks}
     />
-  );
+  ) : null;
 
   const handleBookDetails = (book: Book) => {
     // Use book id to redirect to book detail page
@@ -128,58 +128,68 @@ const BookList = () => {
       </Row>
       <Row className="mt-4">
         <Col>
-          <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
-            <thead>
-              <tr>
-                <th style={{ width: '5%' }}>編號</th>
-                <th style={{ width: '30%' }}>書名</th>
-                <th style={{ width: '20%' }}>作者</th>
-                <th style={{ width: '20%' }}>版本</th>
-                <th style={{ width: '10%' }}>來源</th>
-                <th style={{ width: '15%' }}>分類</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookList.map((book) => (
-                <tr key={book.id}>
-                  <td style={{ width: '5%' }}>{serialNum++}</td>
-                  <td style={{ width: '30%' }}>
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleBookDetails(book);
-                      }}
-                      style={{
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      {book.title}
-                    </a>
-                  </td>
-                  <td style={{ width: '20%' }}>
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleAuthorSearch(book.author);
-                      }}
-                      style={{
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      {book.author}
-                    </a>
-                  </td>
-                  <td style={{ width: '10%' }}>{book.version}</td>
-                  <td style={{ width: '20%' }}>{book.source}</td>
-                  <td style={{ width: '15%' }}>{book.category?.name}</td>
+          {bookList.length > 0 ? (
+            <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
+              <thead>
+                <tr>
+                  <th style={{ width: '5%' }}>編號</th>
+                  <th style={{ width: '30%' }}>書名</th>
+                  <th style={{ width: '20%' }}>作者</th>
+                  <th style={{ width: '20%' }}>版本</th>
+                  <th style={{ width: '10%' }}>來源</th>
+                  <th style={{ width: '15%' }}>分類</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {bookList.map((book) => (
+                  <tr key={book.id}>
+                    <td style={{ width: '5%' }}>{serialNum++}</td>
+                    <td style={{ width: '30%' }}>
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleBookDetails(book);
+                        }}
+                        style={{
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        {book.title}
+                      </a>
+                    </td>
+                    <td style={{ width: '20%' }}>
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleAuthorSearch(book.author);
+                        }}
+                        style={{
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        {book.author}
+                      </a>
+                    </td>
+                    <td style={{ width: '10%' }}>{book.version}</td>
+                    <td style={{ width: '20%' }}>{book.source}</td>
+                    <td style={{ width: '15%' }}>{book.category?.name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : (
+            <Row className="justify-content-center">
+              <Col md={6}>
+                <div className="alert alert-info text-center">
+                  關鍵字未搜尋到
+                </div>
+              </Col>
+            </Row>
+          )}
         </Col>
       </Row>
       <Row className="mt-4">
@@ -188,11 +198,13 @@ const BookList = () => {
           {paginationComponent}
         </Col>
         <Col className="d-flex justify-content-end">
-          <PageNumOption
-            pageSize={pageSize}
-            keyword={keyword!}
-            pageCategory="book"
-          />
+          {bookList.length > 0 && (
+            <PageNumOption
+              pageSize={pageSize}
+              keyword={keyword!}
+              pageCategory="book"
+            />
+          )}
         </Col>
       </Row>
       {/* {selectedBook && (
