@@ -134,8 +134,8 @@ const BookList = () => {
                 <th style={{ width: '5%' }}>編號</th>
                 <th style={{ width: '30%' }}>書名</th>
                 <th style={{ width: '20%' }}>作者</th>
-                <th style={{ width: '10%' }}>版本</th>
-                <th style={{ width: '20%' }}>來源</th>
+                <th style={{ width: '20%' }}>版本</th>
+                <th style={{ width: '10%' }}>來源</th>
                 <th style={{ width: '15%' }}>分類</th>
               </tr>
             </thead>
