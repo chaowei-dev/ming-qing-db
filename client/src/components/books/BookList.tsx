@@ -184,7 +184,7 @@ const BookList = () => {
           ) : (
             <Row className="justify-content-center">
               <Col md={6}>
-                <div className="alert alert-info text-center">
+                <div className="text-center">
                   關鍵字未搜尋到
                 </div>
               </Col>

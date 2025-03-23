@@ -75,16 +75,17 @@ const EntryList = () => {
     window.location.href = url;
   };
 
-  const paginationComponent = (
-    <CustomPagination
-      category="entry"
-      totalPages={totalPages}
-      pageNum={pageNum}
-      pageSize={pageSize}
-      keyword={keyword}
-      itemCount={totalEntries}
-    />
-  );
+  const paginationComponent =
+    entryList.length > 0 ? (
+      <CustomPagination
+        category="entry"
+        totalPages={totalPages}
+        pageNum={pageNum}
+        pageSize={pageSize}
+        keyword={keyword}
+        itemCount={totalEntries}
+      />
+    ) : null;
 
   let serialNum = (pageNum - 1) * pageSize + 1;
 
@@ -105,13 +106,7 @@ const EntryList = () => {
       </Row>
       <Row className="mt-4">
         <Col>
-          {isLoading ? (
-            <div className="d-flex justify-content-center">
-              <Spinner animation="border" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </Spinner>
-            </div>
-          ) : (
+          {entryList.length > 0 ? (
             <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
               <thead>
                 <tr>
@@ -161,11 +156,21 @@ const EntryList = () => {
                     </td>
                     <td style={{ width: '10%' }}>{entry.roll}</td>
                     <td style={{ width: '15%' }}>{entry.roll_name}</td>
-                    <td style={{ width: '15%' }}>{entry.category?.name || '無分類'}</td>
+                    <td style={{ width: '15%' }}>
+                      {entry.category?.name || '無分類'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
+          ) : (
+            <Row className="justify-content-center">
+              <Col md={6}>
+                <div className="text-center">
+                  關鍵字未搜尋到
+                </div>
+              </Col>
+            </Row>
           )}
         </Col>
       </Row>
@@ -175,11 +180,13 @@ const EntryList = () => {
           {paginationComponent}
         </Col>
         <Col className="d-flex justify-content-end">
-          <PageNumOption
-            pageSize={pageSize}
-            keyword={keyword!}
-            pageCategory="entry"
-          />
+          {entryList.length > 0 && (
+            <PageNumOption
+              pageSize={pageSize}
+              keyword={keyword!}
+              pageCategory="entry"
+            />
+          )}
         </Col>
       </Row>
     </Container>
