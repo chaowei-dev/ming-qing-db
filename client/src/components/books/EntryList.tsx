@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { countEntries, fetchEntryList } from '../../services/entryService';
 import CustomPagination from '../CustomPagination';
-import { Container, Row, Col, Table } from 'react-bootstrap';
+import { Container, Row, Col, Table, Spinner } from 'react-bootstrap';
 import EntrySearch from './EntrySearch';
 import PageNumOption from './PageNumOption';
 
@@ -33,21 +33,32 @@ const EntryList = () => {
   const [entryList, setEntryList] = useState<Entry[]>([]);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalEntries, setTotalEntries] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const pageSize = parseInt(params.pageSize ?? '10');
   const pageNum = parseInt(params.pageNum ?? '1');
   const keyword = params.keyword;
 
   const getEntryList = async () => {
-    const response = await fetchEntryList(pageSize, pageNum, keyword!);
-    setEntryList(response);
+    setIsLoading(true);
+    try {
+      const response = await fetchEntryList(pageSize, pageNum, keyword!);
+      setEntryList(response);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTotalPages = async () => {
-    const response = await countEntries(keyword!);
-    const entriesCount = response;
-    setTotalEntries(entriesCount);
-    setTotalPages(Math.ceil(entriesCount / pageSize));
+    setIsLoading(true);
+    try {
+      const response = await countEntries(keyword!);
+      const entriesCount = response;
+      setTotalEntries(entriesCount);
+      setTotalPages(Math.ceil(entriesCount / pageSize));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -72,17 +83,16 @@ const EntryList = () => {
     window.location.href = url;
   };
 
-  const paginationComponent =
-    entryList.length > 0 ? (
-      <CustomPagination
-        category="entry"
-        totalPages={totalPages}
-        pageNum={pageNum}
-        pageSize={pageSize}
-        keyword={keyword}
-        itemCount={totalEntries}
-      />
-    ) : null;
+  const paginationComponent = !isLoading ? (
+    <CustomPagination
+      category="entry"
+      totalPages={totalPages}
+      pageNum={pageNum}
+      pageSize={pageSize}
+      keyword={keyword}
+      itemCount={totalEntries}
+    />
+  ) : null;
 
   let serialNum = (pageNum - 1) * pageSize + 1;
 
@@ -103,72 +113,82 @@ const EntryList = () => {
       </Row>
       <Row className="mt-4">
         <Col>
-          {entryList.length > 0 ? (
-            <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
-              <thead>
-                <tr>
-                  <th style={{ width: '5%' }}>編號</th>
-                  <th style={{ width: '20%' }}>篇目</th>
-                  <th style={{ width: '20%' }}>書目</th>
-                  <th style={{ width: '15%' }}>作者</th>
-                  <th style={{ width: '10%' }}>卷次</th>
-                  <th style={{ width: '15%' }}>卷名</th>
-                  <th style={{ width: '15%' }}>分類</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entryList.map((entry, index) => (
-                  <tr key={entry.id}>
-                    <td style={{ width: '5%' }}>{serialNum + index}</td>
-                    <td style={{ width: '20%' }}>{entry.entry_name}</td>
-                    <td style={{ width: '20%' }}>
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleBookDetails(entry.bookId);
-                        }}
-                        style={{
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                        }}
-                      >
-                        {entry.title}
-                      </a>
-                    </td>
-                    <td style={{ width: '15%' }}>
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleAuthorSearch(entry.author);
-                        }}
-                        style={{
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                        }}
-                      >
-                        {entry.author}
-                      </a>
-                    </td>
-                    <td style={{ width: '10%' }}>{entry.roll}</td>
-                    <td style={{ width: '15%' }}>{entry.roll_name}</td>
-                    <td style={{ width: '15%' }}>
-                      {entry.category?.name || '無分類'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          ) : (
+          {/* Loading spinner */}
+          {isLoading && (
             <Row className="justify-content-center">
-              <Col md={6}>
-                <div className="text-center">
-                  關鍵字未搜尋到
-                </div>
+              <Col md={6} className="text-center">
+                <Spinner animation="border" role="status">
+                  <span className="visually-hidden">載入中...</span>
+                </Spinner>
               </Col>
             </Row>
           )}
+          {/* Table */}
+          {!isLoading &&
+            (entryList.length > 0 ? (
+              <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
+                <thead>
+                  <tr>
+                    <th style={{ width: '5%' }}>編號</th>
+                    <th style={{ width: '20%' }}>篇目</th>
+                    <th style={{ width: '20%' }}>書目</th>
+                    <th style={{ width: '15%' }}>作者</th>
+                    <th style={{ width: '10%' }}>卷次</th>
+                    <th style={{ width: '15%' }}>卷名</th>
+                    <th style={{ width: '15%' }}>分類</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {entryList.map((entry, index) => (
+                    <tr key={entry.id}>
+                      <td style={{ width: '5%' }}>{serialNum + index}</td>
+                      <td style={{ width: '20%' }}>{entry.entry_name}</td>
+                      <td style={{ width: '20%' }}>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleBookDetails(entry.bookId);
+                          }}
+                          style={{
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          {entry.title}
+                        </a>
+                      </td>
+                      <td style={{ width: '15%' }}>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAuthorSearch(entry.author);
+                          }}
+                          style={{
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          {entry.author}
+                        </a>
+                      </td>
+                      <td style={{ width: '10%' }}>{entry.roll}</td>
+                      <td style={{ width: '15%' }}>{entry.roll_name}</td>
+                      <td style={{ width: '15%' }}>
+                        {entry.category?.name || '無分類'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            ) : (
+              <Row className="justify-content-center">
+                <Col md={6}>
+                  <div className="text-center">關鍵字未搜尋到</div>
+                </Col>
+              </Row>
+            ))}
         </Col>
       </Row>
       <Row>
@@ -177,7 +197,7 @@ const EntryList = () => {
           {paginationComponent}
         </Col>
         <Col className="d-flex justify-content-end">
-          {entryList.length > 0 && (
+          {!isLoading && (
             <PageNumOption
               pageSize={pageSize}
               keyword={keyword!}

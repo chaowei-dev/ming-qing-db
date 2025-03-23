@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { countBooks, fetchBookList } from '../../services/bookService';
-import { Col, Container, Row, Table } from 'react-bootstrap';
+import { Col, Container, Row, Table, Spinner } from 'react-bootstrap';
 import CustomPagination from '../CustomPagination';
 import BookSearch from './BookSearch';
 import PageNumOption from './PageNumOption';
@@ -32,6 +32,7 @@ const BookList = () => {
   const [bookList, setBookList] = useState<Book[]>([]);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalBooks, setTotalBooks] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(false);
   // const [showDetailModal, setShowDetailModal] = useState(false);
   // const [selectedBook, setSelectedBook] = useState<Book | null>(null);
 
@@ -42,21 +43,26 @@ const BookList = () => {
 
   // Fetch book list from server
   const getBookList = async () => {
-    const response = await fetchBookList(
-      pageSize,
-      pageNum,
-      keyword!,
-    );
-    setBookList(response);
+    setIsLoading(true);
+    try {
+      const response = await fetchBookList(pageSize, pageNum, keyword!);
+      setBookList(response);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle total pages
   const handleTotalPages = async () => {
-    const response = await countBooks(keyword!);
-    const booksCount = response;
-
-    setTotalBooks(booksCount);
-    setTotalPages(Math.ceil(booksCount / pageSize));
+    setIsLoading(true);
+    try {
+      const response = await countBooks(keyword!);
+      const booksCount = response;
+      setTotalBooks(booksCount);
+      setTotalPages(Math.ceil(booksCount / pageSize));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Fetch book list from server
@@ -82,7 +88,7 @@ const BookList = () => {
   };
 
   // Create Pagination component
-  const paginationComponent = bookList.length > 0 ? (
+  const paginationComponent = !isLoading ? (
     <CustomPagination
       category="book"
       totalPages={totalPages}
@@ -128,68 +134,78 @@ const BookList = () => {
       </Row>
       <Row className="mt-4">
         <Col>
-          {bookList.length > 0 ? (
-            <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
-              <thead>
-                <tr>
-                  <th style={{ width: '5%' }}>編號</th>
-                  <th style={{ width: '30%' }}>書名</th>
-                  <th style={{ width: '20%' }}>作者</th>
-                  <th style={{ width: '20%' }}>版本</th>
-                  <th style={{ width: '10%' }}>來源</th>
-                  <th style={{ width: '15%' }}>分類</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookList.map((book) => (
-                  <tr key={book.id}>
-                    <td style={{ width: '5%' }}>{serialNum++}</td>
-                    <td style={{ width: '30%' }}>
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleBookDetails(book);
-                        }}
-                        style={{
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                        }}
-                      >
-                        {book.title}
-                      </a>
-                    </td>
-                    <td style={{ width: '20%' }}>
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleAuthorSearch(book.author);
-                        }}
-                        style={{
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                        }}
-                      >
-                        {book.author}
-                      </a>
-                    </td>
-                    <td style={{ width: '10%' }}>{book.version}</td>
-                    <td style={{ width: '20%' }}>{book.source}</td>
-                    <td style={{ width: '15%' }}>{book.category?.name}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          ) : (
+          {/* Loading spinner */}
+          {isLoading && (
             <Row className="justify-content-center">
-              <Col md={6}>
-                <div className="text-center">
-                  關鍵字未搜尋到
-                </div>
+              <Col md={6} className="text-center">
+                <Spinner animation="border" role="status">
+                  <span className="visually-hidden">載入中...</span>
+                </Spinner>
               </Col>
             </Row>
           )}
+          {/* Table */}
+          {!isLoading &&
+            (bookList.length > 0 ? (
+              <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
+                <thead>
+                  <tr>
+                    <th style={{ width: '5%' }}>編號</th>
+                    <th style={{ width: '30%' }}>書名</th>
+                    <th style={{ width: '20%' }}>作者</th>
+                    <th style={{ width: '20%' }}>版本</th>
+                    <th style={{ width: '10%' }}>來源</th>
+                    <th style={{ width: '15%' }}>分類</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bookList.map((book) => (
+                    <tr key={book.id}>
+                      <td style={{ width: '5%' }}>{serialNum++}</td>
+                      <td style={{ width: '30%' }}>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleBookDetails(book);
+                          }}
+                          style={{
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          {book.title}
+                        </a>
+                      </td>
+                      <td style={{ width: '20%' }}>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAuthorSearch(book.author);
+                          }}
+                          style={{
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          {book.author}
+                        </a>
+                      </td>
+                      <td style={{ width: '10%' }}>{book.version}</td>
+                      <td style={{ width: '20%' }}>{book.source}</td>
+                      <td style={{ width: '15%' }}>{book.category?.name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            ) : (
+              <Row className="justify-content-center">
+                <Col md={6}>
+                  <div className="text-center">關鍵字未搜尋到</div>
+                </Col>
+              </Row>
+            ))}
         </Col>
       </Row>
       <Row className="mt-4">
@@ -198,7 +214,7 @@ const BookList = () => {
           {paginationComponent}
         </Col>
         <Col className="d-flex justify-content-end">
-          {bookList.length > 0 && (
+          {!isLoading && (
             <PageNumOption
               pageSize={pageSize}
               keyword={keyword!}
