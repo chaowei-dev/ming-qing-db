@@ -106,11 +106,24 @@ const EntryList = () => {
           </h2>
         </Col>
       </Row>
-      <Row className="mt-4">
+      {/* Desktop layout - search and pagination side by side */}
+      <Row className="mt-4 d-none d-md-flex">
         <Col>
           <EntrySearch pageSize={pageSize} keyword={keyword!} />
         </Col>
         <Col>{paginationComponent}</Col>
+      </Row>
+      
+      {/* Mobile layout - search above pagination */}
+      <Row className="mt-4 d-md-none">
+        <Col>
+          <EntrySearch pageSize={pageSize} keyword={keyword!} />
+        </Col>
+      </Row>
+      <Row className="mt-2 d-md-none">
+        <Col className="d-flex justify-content-center">
+          {paginationComponent}
+        </Col>
       </Row>
       <Row className="mt-4">
         <Col>
@@ -194,12 +207,31 @@ const EntryList = () => {
             ))}
         </Col>
       </Row>
-      <Row>
+      {/* Desktop layout - pagination and options side by side */}
+      <Row className="d-none d-md-flex">
         <Col></Col>
         <Col className="d-flex justify-content-center">
           {paginationComponent}
         </Col>
         <Col className="d-flex justify-content-end">
+          {!isLoading && (
+            <PageNumOption
+              pageSize={pageSize}
+              keyword={keyword!}
+              pageCategory="entry"
+            />
+          )}
+        </Col>
+      </Row>
+
+      {/* Mobile layout - pagination and options stacked vertically */}
+      <Row className="mt-2 d-md-none">
+        <Col className="d-flex justify-content-center">
+          {paginationComponent}
+        </Col>
+      </Row>
+      <Row className="mt-2 d-md-none">
+        <Col className="d-flex justify-content-center">
           {!isLoading && (
             <PageNumOption
               pageSize={pageSize}
