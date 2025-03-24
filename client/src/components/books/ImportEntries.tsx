@@ -9,6 +9,7 @@ import {
   Table,
   Form,
   InputGroup,
+  Alert,
 } from 'react-bootstrap';
 import { addEntry } from '../../services/entryService';
 import { fetchCategories } from '../../services/categoryService';
@@ -37,6 +38,7 @@ const ImportEntries = () => {
   const [errorUploadData, setErrorUploadData] = useState<
     EntryWithBookAndRoll[]
   >([]);
+  const [showAlert, setShowAlert] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
@@ -56,6 +58,15 @@ const ImportEntries = () => {
   // Read CSV file and parse data
   const handleFileSelect = (selectedFile: File | null) => {
     if (!selectedFile) return;
+
+    // Check file extension
+    if (!selectedFile.name.toLowerCase().endsWith('.csv')) {
+      setUploadStatus('請上傳 CSV 格式檔案');
+      setShowAlert(true);
+      return;
+    } else {
+      setShowAlert(false);
+    }
 
     // Step 1: Read the file
     const reader = new FileReader();
@@ -193,10 +204,23 @@ const ImportEntries = () => {
           <Button
             variant="primary"
             onClick={handleDataUpload}
-            disabled={!selectedCategoryId || uploadStatus === 'uploading'}
+            disabled={!selectedCategoryId || uploadStatus === 'uploading' || showAlert}
           >
             匯入
           </Button>
+        </Col>
+      </Row>
+      {/* Alert for invalid file type */}
+      <Row className="justify-content-md-center mt-3">
+        <Col xs lg="6">
+          <Alert
+            variant="danger"
+            show={showAlert}
+            onClose={() => setShowAlert(false)}
+            dismissible
+          >
+            請上傳 CSV 格式檔案
+          </Alert>
         </Col>
       </Row>
       {/* Progress display */}
@@ -270,7 +294,18 @@ const ImportEntries = () => {
                 </Table>
               </Card.Text>
               <Card.Text className="text-danger">
-                <b>請另存為 CSV 格式，並確認檔案內容符合範例格式。</b>
+                <b>先用 Excel 編輯後，再另存為 CSV 格式。</b>
+                <br />
+                <b>並確認檔案內容符合範例格式。</b>
+              </Card.Text>
+              <Card.Text className="mt-3">
+                <a
+                  className="btn btn-link"
+                  href="/entry_example.xlsx"
+                  download="entry_example.xlsx"
+                >
+                  下載 excel 範例檔案
+                </a>
               </Card.Text>
             </Card.Body>
           </Card>
