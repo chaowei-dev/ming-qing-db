@@ -140,7 +140,7 @@ const EntryList = () => {
           {/* Table */}
           {!isLoading &&
             (entryList.length > 0 ? (
-              <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
+              <Table responsive striped bordered hover className="entry-table" style={{ fontSize: '0.9rem' }}>
                 <thead>
                  <tr>
                      <th style={{ width: '5%' }}>編號</th>
