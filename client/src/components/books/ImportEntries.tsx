@@ -26,6 +26,7 @@ interface EntryWithBookAndRoll {
   roll: string;
   rollName: string;
   entry: string;
+  remarks: string;
 }
 
 const ImportEntries = () => {
@@ -70,7 +71,7 @@ const ImportEntries = () => {
       // Parse each row
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i].split(',');
-        if (row.length === 7) {
+        if (row.length >= 7) {
           data.push({
             title: row[0],
             author: row[1],
@@ -79,6 +80,7 @@ const ImportEntries = () => {
             entry: row[4],
             version: row[5],
             source: row[6],
+            remarks: row[7],
           });
         }
       }
@@ -245,6 +247,7 @@ const ImportEntries = () => {
                     <th>卷名</th>
                     <th>篇名</th>
                     <th>版本</th>
+                    <th>備註</th>
                   </tr>
                   <tr>
                     <td>太師誠意伯劉文成公集</td>
@@ -252,7 +255,8 @@ const ImportEntries = () => {
                     <td>序</td>
                     <td>李本</td>
                     <td>重編誠意伯文集序</td>
-                    <td>1</td>
+                    <td></td>
+                    <td>點校</td>
                   </tr>
                   <tr>
                     <td>太師誠意伯劉文成公集</td>
@@ -260,7 +264,8 @@ const ImportEntries = () => {
                     <td>卷之一</td>
                     <td>御書（七篇）</td>
                     <td>御製慰書</td>
-                    <td>1</td>
+                    <td></td>
+                    <td>點校</td>
                   </tr>
                 </Table>
               </Card.Text>

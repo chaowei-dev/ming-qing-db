@@ -1,4 +1,4 @@
-import e, { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import {
   addBookAndGetBookId,
@@ -27,6 +27,7 @@ interface EntryWithBookAndRoll {
   roll_name: string;
   title: string;
   author: string;
+  remarks: string | null;
   category?: {
     id: number;
     name: string;
@@ -58,6 +59,7 @@ interface Entry {
   id: number;
   entry_name: string;
   rollId: number;
+  remarks: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -246,6 +248,7 @@ export const getEntries = async (
       title: entry.roll.book.title,
       author: entry.roll.book.author,
       bookId: entry.roll.book.id,
+      remarks: entry.remarks,
       category: entry.roll.book.category,
       createdAt: entry.createdAt.toISOString(),
       updatedAt: entry.updatedAt.toISOString(),
@@ -336,7 +339,7 @@ export const getBookWithDetails = async (
 // Add entry
 export const addEntry = async (req: Request, res: Response): Promise<void> => {
   // Step 1: Parse the request body
-  const { title, author, source, version, roll, rollName, entry, categoryId } = req.body;
+  const { title, author, source, version, roll, rollName, entry, categoryId, remarks } = req.body;
 
   try {
     // Step 2: Check book is exist or not by title, author, version, source
@@ -366,7 +369,7 @@ export const addEntry = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Step 4: Insert entry with rollId
-    const entryName = await addEntryByRollId(entry, rollId);
+    const entryName = await addEntryByRollId(entry, rollId, remarks);
 
     console.log(`Entry "${entryName}" added successfully`);
 

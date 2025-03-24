@@ -15,6 +15,7 @@ interface Entry {
   title: string;
   author: string;
   bookId: number;
+  remarks?: string;
   category?: {
     id: number;
     name: string;
@@ -128,22 +129,23 @@ const EntryList = () => {
             (entryList.length > 0 ? (
               <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
                 <thead>
-                  <tr>
-                    <th style={{ width: '5%' }}>編號</th>
-                    <th style={{ width: '20%' }}>篇目</th>
-                    <th style={{ width: '20%' }}>書目</th>
-                    <th style={{ width: '15%' }}>作者</th>
-                    <th style={{ width: '10%' }}>卷次</th>
-                    <th style={{ width: '15%' }}>卷名</th>
-                    <th style={{ width: '15%' }}>分類</th>
-                  </tr>
+                 <tr>
+                     <th style={{ width: '5%' }}>編號</th>
+                     <th style={{ width: '15%' }}>篇目</th>
+                     <th style={{ width: '15%' }}>書目</th>
+                     <th style={{ width: '12%' }}>作者</th>
+                     <th style={{ width: '8%' }}>卷次</th>
+                     <th style={{ width: '12%' }}>卷名</th>
+                     <th style={{ width: '13%' }}>分類</th>
+                     <th style={{ width: '10%' }}>備註</th>
+                 </tr>
                 </thead>
                 <tbody>
                   {entryList.map((entry, index) => (
                     <tr key={entry.id}>
-                      <td style={{ width: '5%' }}>{serialNum + index}</td>
-                      <td style={{ width: '20%' }}>{entry.entry_name}</td>
-                      <td style={{ width: '20%' }}>
+                      <td>{serialNum + index}</td>
+                      <td>{entry.entry_name}</td>
+                      <td>
                         <a
                           href="#"
                           onClick={(e) => {
@@ -158,7 +160,7 @@ const EntryList = () => {
                           {entry.title}
                         </a>
                       </td>
-                      <td style={{ width: '15%' }}>
+                      <td>
                         <a
                           href="#"
                           onClick={(e) => {
@@ -173,11 +175,12 @@ const EntryList = () => {
                           {entry.author}
                         </a>
                       </td>
-                      <td style={{ width: '10%' }}>{entry.roll}</td>
-                      <td style={{ width: '15%' }}>{entry.roll_name}</td>
-                      <td style={{ width: '15%' }}>
+                      <td>{entry.roll}</td>
+                      <td>{entry.roll_name}</td>
+                      <td>
                         {entry.category?.name || '無分類'}
                       </td>
+                      <td>{entry.remarks || '-'}</td>
                     </tr>
                   ))}
                 </tbody>

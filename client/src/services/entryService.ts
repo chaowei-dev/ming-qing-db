@@ -8,6 +8,7 @@ interface EntryWithBookAndRoll {
   roll: string;
   rollName: string;
   entry: string;
+  remarks?: string;
   categoryId?: string;
 }
 

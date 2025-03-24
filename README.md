@@ -2,6 +2,10 @@
 
 # to do
 
+- backup:
+  [ ] Build an api for: get all entry from data base
+  [ ] Download api result to .xslx
+
 - backend:
   [x] 新增 Category table
   [x] 在 Book 新增 FK categoryId
@@ -14,7 +18,7 @@
   [x] 新增 Category page and Menu bar
   [x] 更新書目列表頁面（table + search）
   [x] 更新篇目列表頁面（table + search）
-  [ ] 更新匯入篇目功能
+  [x] 更新匯入篇目功能
 
 - 資料庫列表：
   - 明清詩文集篇目索引。（已建置）

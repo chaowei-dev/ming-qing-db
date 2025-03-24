@@ -102,12 +102,13 @@ export const addRollByBookIdAndGetRollId = async (
   }
 };
 
-export const addEntryByRollId = async (entry_name: string, rollId: any) => {
+export const addEntryByRollId = async (entry_name: string, rollId: any, remarks?: string) => {
   try {
     const newEntry = await prisma.entry.create({
       data: {
         entry_name,
         rollId,
+        remarks,
       },
     });
     return newEntry.entry_name;

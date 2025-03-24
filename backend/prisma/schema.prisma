@@ -42,6 +42,7 @@ model Book {
   rolls     Roll[]
   categoryId Int?
   category  Category? @relation(fields: [categoryId], references: [id])
+  remarks   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -62,6 +63,7 @@ model Entry {
   entry_name String
   rollId     Int
   roll       Roll     @relation(fields: [rollId], references: [id])
+  remarks    String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

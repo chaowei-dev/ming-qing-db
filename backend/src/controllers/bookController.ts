@@ -8,6 +8,7 @@ interface ResultOfBook {
   author: string;
   version: string;
   source: string;
+  remarks?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -116,7 +117,7 @@ export const getBookCount = async (req: Request, res: Response) => {
 };
 
 export const addBook = async (req: Request, res: Response) => {
-  const { title, author, version, source, categoryName } = req.body;
+  const { title, author, version, source, categoryName, remarks } = req.body;
   let categoryId = null;
   
   if (categoryName) {
@@ -140,6 +141,7 @@ export const addBook = async (req: Request, res: Response) => {
         version,
         source,
         categoryId,
+        remarks,
       },
     });
     res.status(201).json(newBook);
@@ -150,11 +152,11 @@ export const addBook = async (req: Request, res: Response) => {
 
 export const updateBook = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { title, author, version, source } = req.body;
+  const { title, author, version, source, remarks } = req.body;
   try {
     const updatedBook = await prisma.book.update({
       where: { id: Number(id) },
-      data: { title, author, version, source },
+      data: { title, author, version, source, remarks },
     });
     res.json(updatedBook);
   } catch (error) {

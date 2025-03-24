@@ -12,6 +12,7 @@ interface Book {
   author: string;
   version: string;
   source: string;
+  remarks?: string;
   createBy: string;
   updateBy: string;
   category?: {
@@ -149,20 +150,21 @@ const BookList = () => {
             (bookList.length > 0 ? (
               <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
                 <thead>
-                  <tr>
-                    <th style={{ width: '5%' }}>編號</th>
-                    <th style={{ width: '30%' }}>書名</th>
-                    <th style={{ width: '20%' }}>作者</th>
-                    <th style={{ width: '20%' }}>版本</th>
-                    <th style={{ width: '10%' }}>來源</th>
-                    <th style={{ width: '15%' }}>分類</th>
-                  </tr>
+                 <tr>
+                     <th style={{ width: '5%' }}>編號</th>
+                     <th style={{ width: '25%' }}>書名</th>
+                     <th style={{ width: '15%' }}>作者</th>
+                     <th style={{ width: '15%' }}>版本</th>
+                     <th style={{ width: '10%' }}>來源</th>
+                     <th style={{ width: '15%' }}>分類</th>
+                     <th style={{ width: '10%' }}>備註</th>
+                 </tr>
                 </thead>
                 <tbody>
                   {bookList.map((book) => (
                     <tr key={book.id}>
-                      <td style={{ width: '5%' }}>{serialNum++}</td>
-                      <td style={{ width: '30%' }}>
+                      <td>{serialNum++}</td>
+                      <td>
                         <a
                           href="#"
                           onClick={(e) => {
@@ -177,7 +179,7 @@ const BookList = () => {
                           {book.title}
                         </a>
                       </td>
-                      <td style={{ width: '20%' }}>
+                      <td>
                         <a
                           href="#"
                           onClick={(e) => {
@@ -192,9 +194,10 @@ const BookList = () => {
                           {book.author}
                         </a>
                       </td>
-                      <td style={{ width: '10%' }}>{book.version}</td>
-                      <td style={{ width: '20%' }}>{book.source}</td>
-                      <td style={{ width: '15%' }}>{book.category?.name}</td>
+                      <td>{book.version}</td>
+                      <td>{book.source}</td>
+                      <td>{book.category?.name}</td>
+                      <td>{book.remarks || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
