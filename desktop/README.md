@@ -108,16 +108,8 @@ ming-qing-db-desktop/
 
 ### 3. 資料庫設計
 
-#### 資料表結構（對應 Prisma）
+#### 3.1 資料表結構（對應 Prisma）
 ```sql
--- 使用者表（對應 Prisma: User）
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'USER' CHECK (role IN ('ADMIN','USER'))
-);
-
 -- 類別表（對應 Prisma: Category）
 CREATE TABLE categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -170,14 +162,93 @@ CREATE TABLE entries (
 );
 CREATE INDEX idx_entries_roll_id ON entries(roll_id);
 
--- 注意：updated_at 欄位請在應用程式更新資料時同步寫入 CURRENT_TIMESTAMP。
+-- 注意：`updated_at` 欄位由觸發器自動維護（見下方觸發器），
+-- 新插入使用 DEFAULT CURRENT_TIMESTAMP。
 ```
 
-#### 與 Prisma 對齊說明
+#### 3.2 與 Web/Prisma 對齊說明
 - 欄位命名：桌面端 SQLite 採用底線風格（如 `created_at`），對應 Prisma / 後端的駝峰（如 `createdAt`）。
 - 外鍵行為：`books.category_id` 於刪除類別時採 `SET NULL`，其他外鍵為 `RESTRICT`（與後端一致）。
 - 補充索引：為常用查詢路徑添加索引（如 `books(title, author)`、`rolls(book_id)`、`entries(roll_id)`）。
-- 全文搜尋：若需要 SQLite FTS5，建議另建虛表與同步策略（可在後續版本加入）。
+ - 單機桌面版為單使用者，不含認證/登入/權限；認證相關為 Web 版僅。
+ 
+
+#### 3.3 資料完整性與維護（唯一鍵、觸發器、遷移、PRAGMA）
+
+```sql
+-- 唯一性約束（避免重複資料）
+-- 書籍唯一鍵：以 title/author/version/source 決定一本書，避免重複建冊
+CREATE UNIQUE INDEX IF NOT EXISTS idx_books_unique
+ON books(title, author, version, source);
+
+-- 卷唯一鍵：同一本書內，(roll, roll_name) 不可重複
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rolls_unique
+ON rolls(book_id, roll, roll_name);
+
+-- 篇目唯一鍵：同一卷內，篇目名稱不可重複
+CREATE UNIQUE INDEX IF NOT EXISTS idx_entries_unique
+ON entries(roll_id, entry_name);
+
+-- updated_at 自動更新觸發器（僅在關鍵欄位變更時觸發，避免遞迴）
+-- 類別表：當 name 變更時更新 updated_at
+CREATE TRIGGER IF NOT EXISTS categories_set_updated_at
+AFTER UPDATE OF name ON categories
+BEGIN
+  UPDATE categories SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+END;
+
+-- 書籍表：當主要資訊或關聯變更時更新 updated_at
+CREATE TRIGGER IF NOT EXISTS books_set_updated_at
+AFTER UPDATE OF title, author, version, source, category_id, remarks ON books
+BEGIN
+  UPDATE books SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+END;
+
+-- 卷表：當卷號/卷名/所屬書籍變更時更新 updated_at
+CREATE TRIGGER IF NOT EXISTS rolls_set_updated_at
+AFTER UPDATE OF roll, roll_name, book_id ON rolls
+BEGIN
+  UPDATE rolls SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+END;
+
+-- 篇目表：當名稱/所屬卷/備註變更時更新 updated_at
+CREATE TRIGGER IF NOT EXISTS entries_set_updated_at
+AFTER UPDATE OF entry_name, roll_id, remarks ON entries
+BEGIN
+  UPDATE entries SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+END;
+
+-- 簡易遷移版本表（記錄已套用的資料庫版本）
+-- 用於記錄每次結構升級的版本與套用時間，避免重複與遺漏
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  version INTEGER PRIMARY KEY,
+  applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 連線層 PRAGMA 建議（於程式啟動後設定）
+PRAGMA foreign_keys = ON;    -- 啟用外鍵約束
+PRAGMA journal_mode = WAL;   -- 提升讀寫並行性
+PRAGMA synchronous = NORMAL; -- 與 WAL 搭配的平衡模式
+```
+
+範例（SQLAlchemy 2.x 於連線建立時設定 PRAGMA）：
+
+```python
+from sqlalchemy import event, create_engine
+
+engine = create_engine("sqlite:///data/database.db", future=True)
+
+@event.listens_for(engine, "connect")
+def set_sqlite_pragmas(dbapi_conn, _):
+    cur = dbapi_conn.cursor()
+    cur.execute("PRAGMA foreign_keys=ON;")
+    cur.execute("PRAGMA journal_mode=WAL;")
+    cur.execute("PRAGMA synchronous=NORMAL;")
+    cur.close()
+```
+
+#### 3.4 全文搜尋（可選）
+- 需要全文檢索時，採用 SQLite FTS5 以虛表儲存可搜尋內容，並以觸發器同步正表與 FTS 表；本版本先不內建，視需求加入。
 
 ### 4. UI 設計概要
 
@@ -398,7 +469,7 @@ pyinstaller build_app.spec
 ### 11. 前後端功能清單（實作指引）
 
 #### 後端（對照既有 Web API 能力）
-- 認證
+- 認證（Web 版僅；桌面端不實作）
   - POST /auth/register：使用者註冊
   - POST /auth/login：使用者登入（取得 Token）
 - 類別（Category）
