@@ -430,6 +430,77 @@ pyinstaller build_app.spec
 - 提供資料庫備份功能
 - 支援版本回滾
 
+#### 大量匯入策略（至 1,000,000 筆）
+- 目標：在單機 SQLite 上以「可靠、可回復」方式大量匯入，不阻塞 UI、可觀測進度、資料不重複。
+- 前提：CSV 欄位順序與 Web 版一致（title, author, roll, rollName, entry, version, source, remarks）。
+
+流程（建議採「分批＋暫存表＋集合式 SQL」）
+1) 分批讀取與交易
+   - 以 10,000 筆為一批（可調 5k–20k），每批使用單一交易提交。
+   - 以背景執行緒處理，回報進度（行數與批次），可取消。
+
+2) 暫存表 staging（每批建立/清空）
+```sql
+-- 暫存匯入資料（每批重建或 TRUNCATE 等效）
+DROP TABLE IF EXISTS staging_entries;
+CREATE TABLE staging_entries (
+  title TEXT NOT NULL,
+  author TEXT NOT NULL,
+  roll TEXT NOT NULL,
+  rollName TEXT NOT NULL,
+  entry TEXT NOT NULL,
+  version TEXT NOT NULL,
+  source TEXT NOT NULL,
+  remarks TEXT NULL
+);
+```
+
+3) 批次寫入 staging（Python executemany 或 pandas.to_sql(chunksize)）
+```python
+# 以 executemany 寫入 staging_entries（略）
+```
+
+4) 集合式匯入（依唯一鍵去重，具冪等性）
+```sql
+-- 4.1 補齊缺少的書籍（以唯一鍵定義一本書）
+INSERT OR IGNORE INTO books(title, author, version, source, category_id, remarks)
+SELECT DISTINCT s.title, s.author, s.version, s.source, NULL, NULL
+FROM staging_entries s;
+
+-- 4.2 補齊缺少的卷（由 staging 對應到剛補齊/既有的書籍）
+INSERT OR IGNORE INTO rolls(roll, roll_name, book_id)
+SELECT DISTINCT s.roll, s.rollName, b.id
+FROM staging_entries s
+JOIN books b ON b.title = s.title AND b.author = s.author AND b.version = s.version AND b.source = s.source;
+
+-- 4.3 補齊缺少的篇目（由 staging 對應到 rolls）
+INSERT OR IGNORE INTO entries(entry_name, roll_id, remarks)
+SELECT s.entry, r.id, s.remarks
+FROM staging_entries s
+JOIN books b ON b.title = s.title AND b.author = s.author AND b.version = s.version AND b.source = s.source
+JOIN rolls r ON r.book_id = b.id AND r.roll = s.roll AND r.roll_name = s.rollName;
+```
+
+特性與說明
+- 冪等：依賴唯一索引（見 3.3），使用 `INSERT OR IGNORE` 避免重複，允許中斷後重跑不會重複插入。
+- 原子性：每批以單一交易提交；失敗可回滾到批次起點。
+- 效能：集合式 SQL 大幅減少往返與逐列查詢；staging 可讓 SQLite 以索引有效合併。
+- 驗證：匯入前可在應用層驗證欄位空值/長度/非法字元；錯誤列輸出到報表（CSV/Excel）不影響主流程。
+
+可選優化（僅在需要時啟用）
+- 暫時關閉非唯一索引（如 `idx_books_title_author`、`idx_rolls_book_id`、`idx_entries_roll_id`）於大量匯入前，匯入完畢再重建；唯一索引需保留以確保冪等。
+- 匯入會話期間可調整 PRAGMA（僅針對此匯入連線）：
+  - `PRAGMA locking_mode=EXCLUSIVE;` 降低鎖競爭（單機情境）
+  - `PRAGMA cache_size=-200000;`（約 200MB 快取，依記憶體調整）
+  - 完成後恢復預設；`foreign_keys=ON` 請保持不變。
+
+恢復與續傳
+- 任何批次失敗都不影響先前批次；修正來源檔或清理 staging 後可從失敗批次重新開始。
+- 因為採用 `INSERT OR IGNORE` 與唯一鍵，重覆執行批次不會產生重複資料。
+
+FTS（若啟用）
+- 建議在全部匯入完成後再重建 FTS 索引或觸發重建，避免匯入期間頻繁維護造成額外成本。
+
 ### 9. 常見問題
 
 #### 資料庫相關
