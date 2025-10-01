@@ -10,26 +10,27 @@
 
 #### 所需安裝套件
 ```bash
-# 核心依賴
-pip install PyQt6>=6.4.0
-pip install pandas>=2.0.0
-pip install openpyxl>=3.1.0
-pip install SQLAlchemy>=2.0.0
+# 推薦使用 requirements.txt（已釘選次要版本）
+pip install -r requirements.txt
+
+# 或分別安裝（同等版本範圍）
+pip install PyQt6==6.6.*
+pip install pandas==2.2.*
+pip install openpyxl==3.1.*
+pip install SQLAlchemy==2.0.*
+pip install appdirs==1.4.*
 
 # 開發工具
-pip install PyInstaller>=5.0.0
-pip install pytest>=7.0.0
-pip install black>=23.0.0
-pip install flake8>=6.0.0
-
-# 或使用 requirements.txt
-pip install -r requirements.txt
+pip install PyInstaller==6.6.*
+pip install pytest==8.3.*
+pip install black==24.8.*
+pip install flake8==7.1.*
 ```
 
 ### 2. 專案結構設計
 
 ```
-ming-qing-db-desktop/
+desktop/
 │
 ├── src/                    # 源代碼目錄
 │   ├── main.py            # 程式進入點
@@ -236,14 +237,39 @@ PRAGMA synchronous = NORMAL; -- 與 WAL 搭配的平衡模式
 ```python
 from sqlalchemy import event, create_engine
 
-engine = create_engine("sqlite:///data/database.db", future=True)
+# UI 主執行緒專用 Engine（讀寫）
+ui_engine = create_engine(
+    "sqlite:///data/database.db",
+    future=True,
+    pool_pre_ping=True,
+    connect_args={"timeout": 5},  # busy_timeout 仍需以 PRAGMA 設定
+)
 
-@event.listens_for(engine, "connect")
-def set_sqlite_pragmas(dbapi_conn, _):
+@event.listens_for(ui_engine, "connect")
+def set_sqlite_pragmas_for_ui(dbapi_conn, _):
     cur = dbapi_conn.cursor()
     cur.execute("PRAGMA foreign_keys=ON;")
     cur.execute("PRAGMA journal_mode=WAL;")
     cur.execute("PRAGMA synchronous=NORMAL;")
+    cur.execute("PRAGMA busy_timeout=5000;")
+    cur.close()
+
+# 匯入背景執行緒專用 Engine（避免共用連線）
+import_engine = create_engine(
+    "sqlite:///data/database.db",
+    future=True,
+    pool_pre_ping=True,
+)
+
+@event.listens_for(import_engine, "connect")
+def set_sqlite_pragmas_for_import(dbapi_conn, _):
+    cur = dbapi_conn.cursor()
+    cur.execute("PRAGMA foreign_keys=ON;")
+    cur.execute("PRAGMA journal_mode=WAL;")
+    cur.execute("PRAGMA synchronous=NORMAL;")
+    cur.execute("PRAGMA busy_timeout=5000;")
+    cur.execute("PRAGMA temp_store=MEMORY;")
+    cur.execute("PRAGMA cache_size=-200000;")  # 約 200MB，視記憶體調整
     cur.close()
 ```
 
@@ -317,7 +343,7 @@ def set_sqlite_pragmas(dbapi_conn, _):
 - ✅ 資料驗證和完整性檢查
 
 #### 搜尋功能
-- ✅ 全文搜尋
+- （可選）全文搜尋（FTS5）
 - ✅ 多欄位組合搜尋
 - ✅ 搜尋歷史記錄
 - ✅ 搜尋結果排序和篩選
@@ -348,7 +374,7 @@ def set_sqlite_pragmas(dbapi_conn, _):
 ```bash
 # 1. 克隆專案
 git clone [repository-url]
-cd ming-qing-db-desktop
+cd desktop
 
 # 2. 創建虛擬環境
 python -m venv venv
@@ -474,15 +500,17 @@ FROM staging_entries s
 JOIN books b ON b.title = s.title AND b.author = s.author AND b.version = s.version AND b.source = s.source;
 
 -- 4.3 補齊缺少的篇目（由 staging 對應到 rolls）
-INSERT OR IGNORE INTO entries(entry_name, roll_id, remarks)
+INSERT INTO entries(entry_name, roll_id, remarks)
 SELECT s.entry, r.id, s.remarks
 FROM staging_entries s
 JOIN books b ON b.title = s.title AND b.author = s.author AND b.version = s.version AND b.source = s.source
-JOIN rolls r ON r.book_id = b.id AND r.roll = s.roll AND r.roll_name = s.rollName;
+JOIN rolls r ON r.book_id = b.id AND r.roll = s.roll AND r.roll_name = s.rollName
+ON CONFLICT(roll_id, entry_name) DO UPDATE SET
+  remarks = COALESCE(excluded.remarks, entries.remarks);
 ```
 
 特性與說明
-- 冪等：依賴唯一索引（見 3.3），使用 `INSERT OR IGNORE` 避免重複，允許中斷後重跑不會重複插入。
+- 冪等：依賴唯一索引（見 3.3）。books/rolls 採 `INSERT OR IGNORE` 去重；entries 採 UPSERT，僅當來源 `remarks` 非空時覆蓋原值（透過 `COALESCE(excluded.remarks, entries.remarks)`）。
 - 原子性：每批以單一交易提交；失敗可回滾到批次起點。
 - 效能：集合式 SQL 大幅減少往返與逐列查詢；staging 可讓 SQLite 以索引有效合併。
 - 驗證：匯入前可在應用層驗證欄位空值/長度/非法字元；錯誤列輸出到報表（CSV/Excel）不影響主流程。
@@ -490,9 +518,16 @@ JOIN rolls r ON r.book_id = b.id AND r.roll = s.roll AND r.roll_name = s.rollNam
 可選優化（僅在需要時啟用）
 - 暫時關閉非唯一索引（如 `idx_books_title_author`、`idx_rolls_book_id`、`idx_entries_roll_id`）於大量匯入前，匯入完畢再重建；唯一索引需保留以確保冪等。
 - 匯入會話期間可調整 PRAGMA（僅針對此匯入連線）：
-  - `PRAGMA locking_mode=EXCLUSIVE;` 降低鎖競爭（單機情境）
+  - `PRAGMA busy_timeout=5000;`（避免短暫鎖直接失敗）
   - `PRAGMA cache_size=-200000;`（約 200MB 快取，依記憶體調整）
+  - `PRAGMA temp_store=MEMORY;`
+  - 不建議 `locking_mode=EXCLUSIVE`（會阻塞 UI 讀取）。
   - 完成後恢復預設；`foreign_keys=ON` 請保持不變。
+
+收尾步驟（必做）
+- 若匯入前有停用非唯一索引，請先重建（與表結構一致）。
+- 執行 `ANALYZE;` 以更新統計資訊，優化查詢計劃。
+- 執行 `PRAGMA wal_checkpoint(TRUNCATE);` 釋放 WAL 檔案空間。
 
 恢復與續傳
 - 任何批次失敗都不影響先前批次；修正來源檔或清理 staging 後可從失敗批次重新開始。

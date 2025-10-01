@@ -12,7 +12,7 @@
 
 ### 3. 資料庫設計
 - [ ] 建立 `resources/database/init.sql`（3.1 表結構）
-- [ ] 實作 `models/database.py`（SQLAlchemy engine 與連線 PRAGMA）
+ - [ ] 實作 `models/database.py`（SQLAlchemy engine；UI 與匯入用獨立 Engine；每連線 PRAGMA）
 - [ ] 實作 `utils/database_migrator.py`（3.3 索引/觸發器/遷移表）
 - [ ] 測試唯一鍵違反與 `updated_at` 觸發器生效
 - [ ]（可選）FTS5 規劃留白，暫不實作（3.4）
@@ -45,10 +45,10 @@
 
 ### 8. 資料遷移與大量匯入
 - [ ] 實作暫存表 staging 與批次寫入（5k–20k）
-- [ ] 集合式 SQL：補齊 books/rolls/entries（INSERT OR IGNORE）
+ - [ ] 集合式 SQL：books/rolls 用 INSERT OR IGNORE；entries 用 UPSERT（僅在來源 remarks 非空時覆蓋）
 - [ ] 匯入進度、可取消、錯誤列報表輸出
 - [ ]（可選）匯入前後停用/重建非唯一索引
-- [ ] 匯入完成執行 WAL checkpoint 與 `ANALYZE`
+ - [ ] 匯入完成收尾：重建非唯一索引 → 執行 `ANALYZE` → `wal_checkpoint(TRUNCATE)`
 
 ### 9. 常見問題
 - [ ] 文件化 `database is locked` 與權限疑難排解
