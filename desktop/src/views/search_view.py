@@ -24,11 +24,14 @@ class _SearchResultModel(QAbstractTableModel):
         super().__init__()
         self._rows = rows
         self._headers = [
+            # ("id", "編號"),
+            ("entry_name", "篇目"),
             ("book_title", "書名"),
             ("book_author", "作者"),
             ("roll", "卷"),
             ("roll_name", "卷名"),
-            ("entry_name", "篇目"),
+            ("category_name", "類別"),
+            ("remarks", "備註"),
         ]
 
     def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # type: ignore[override]
@@ -130,11 +133,15 @@ class SearchView(QWidget):
 
         clauses = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
         sql = (
-            "SELECT b.title AS book_title, b.author AS book_author, "
-            "r.roll, r.roll_name, e.entry_name "
+            "SELECT e.id AS id, e.entry_name, "
+            "b.title AS book_title, b.author AS book_author, "
+            "r.roll, r.roll_name, "
+            "COALESCE(c.name, '') AS category_name, "
+            "COALESCE(e.remarks, '') AS remarks "
             "FROM entries e "
             "JOIN rolls r ON e.roll_id = r.id "
-            "JOIN books b ON r.book_id = b.id" + clauses + " "
+            "JOIN books b ON r.book_id = b.id "
+            "LEFT JOIN categories c ON b.category_id = c.id" + clauses + " "
             "ORDER BY b.title, r.roll LIMIT 1000"
         )
         with self._engine.connect() as conn:
