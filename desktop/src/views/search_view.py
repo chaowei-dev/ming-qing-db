@@ -12,9 +12,11 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QLabel,
     QMessageBox,
+    QComboBox,
 )
 
 from models.database import get_engine
+from sqlalchemy import text
 
 
 class _SearchResultModel(QAbstractTableModel):
@@ -66,19 +68,28 @@ class SearchView(QWidget):
         self._author_in = QLineEdit(self)
         self._roll_in = QLineEdit(self)
         self._entry_in = QLineEdit(self)
+        self._category_cb = QComboBox(self)
         self._search_btn = QPushButton("搜尋", self)
         self._search_btn.clicked.connect(self.search)
 
-        filters = QHBoxLayout()
-        filters.addWidget(QLabel("書名"))
-        filters.addWidget(self._title_in)
-        filters.addWidget(QLabel("作者"))
-        filters.addWidget(self._author_in)
-        filters.addWidget(QLabel("卷"))
-        filters.addWidget(self._roll_in)
-        filters.addWidget(QLabel("篇目"))
-        filters.addWidget(self._entry_in)
-        filters.addWidget(self._search_btn)
+        self._load_categories()
+
+        row1 = QHBoxLayout()
+        row1.addWidget(QLabel("類別"))
+        row1.addWidget(self._category_cb)
+        row1.addWidget(QLabel("書名"))
+        row1.addWidget(self._title_in)
+
+        row2 = QHBoxLayout()
+        row2.addWidget(QLabel("作者"))
+        row2.addWidget(self._author_in)
+        row2.addWidget(QLabel("卷"))
+        row2.addWidget(self._roll_in)
+
+        row3 = QHBoxLayout()
+        row3.addWidget(QLabel("篇目"))
+        row3.addWidget(self._entry_in)
+        row3.addWidget(self._search_btn)
 
         # Results
         self._table = QTableView(self)
@@ -86,27 +97,38 @@ class SearchView(QWidget):
         self._table.setModel(self._model)
 
         layout = QVBoxLayout(self)
-        layout.addLayout(filters)
+        layout.addLayout(row1)
+        layout.addLayout(row2)
+        layout.addLayout(row3)
         layout.addWidget(self._table)
 
     def _query_results(self, title: str, author: str, roll: str, entry: str) -> List[Dict[str, Any]]:
-        # OR search among fields, empty filters ignored
-        where = []
+        # Text filters combined by OR; category filter (if any) combined by AND
+        text_where: List[str] = []
         params: Dict[str, Any] = {}
         if title:
-            where.append("b.title LIKE :title")
+            text_where.append("b.title LIKE :title")
             params["title"] = f"%{title}%"
         if author:
-            where.append("b.author LIKE :author")
+            text_where.append("b.author LIKE :author")
             params["author"] = f"%{author}%"
         if roll:
-            where.append("r.roll LIKE :roll OR r.roll_name LIKE :roll")
+            text_where.append("r.roll LIKE :roll OR r.roll_name LIKE :roll")
             params["roll"] = f"%{roll}%"
         if entry:
-            where.append("e.entry_name LIKE :entry")
+            text_where.append("e.entry_name LIKE :entry")
             params["entry"] = f"%{entry}%"
 
-        clauses = (" WHERE " + " OR ".join(where)) if where else ""
+        where_parts: List[str] = []
+        if text_where:
+            where_parts.append("(" + " OR ".join(text_where) + ")")
+
+        cat_id = self._category_cb.currentData()
+        if cat_id is not None:
+            where_parts.append("b.category_id = :cat_id")
+            params["cat_id"] = int(cat_id)
+
+        clauses = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
         sql = (
             "SELECT b.title AS book_title, b.author AS book_author, "
             "r.roll, r.roll_name, e.entry_name "
@@ -116,8 +138,17 @@ class SearchView(QWidget):
             "ORDER BY b.title, r.roll LIMIT 1000"
         )
         with self._engine.connect() as conn:
-            rows = [dict(r._mapping) for r in conn.execute(sql, params)]  # type: ignore[attr-defined]
+            rows = [dict(r._mapping) for r in conn.execute(text(sql), params)]  # type: ignore[attr-defined]
         return rows
+
+    def _load_categories(self) -> None:
+        self._category_cb.clear()
+        self._category_cb.addItem("全部", None)
+        sql = "SELECT id, name FROM categories ORDER BY name"
+        with self._engine.connect() as conn:
+            for r in conn.execute(text(sql)):
+                d = dict(r._mapping)  # type: ignore[attr-defined]
+                self._category_cb.addItem(d["name"], d["id"])
 
     def search(self) -> None:
         try:
