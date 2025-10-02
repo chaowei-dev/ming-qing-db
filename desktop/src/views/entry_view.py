@@ -103,7 +103,7 @@ class _EntryDialog(QDialog):
         )
         self.book_cb.clear()
         with self._engine.connect() as conn:
-            for r in conn.execute(sql):
+            for r in conn.execute(text(sql)):
                 d = dict(r._mapping)  # type: ignore[attr-defined]
                 label = f"{d['title']} — {d['author']} — {d['version']}/{d['source']}"
                 self.book_cb.addItem(label, d["id"])  # book_id in itemData
