@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from models.database import get_engine
+from sqlalchemy import text
 
 
 class _CategoryTableModel(QAbstractTableModel):
@@ -98,7 +99,7 @@ class CategoryView(QWidget):
             "SELECT id, name, created_at, updated_at FROM categories ORDER BY name"
         )
         with self._engine.connect() as conn:
-            return [dict(r._mapping) for r in conn.execute(sql)]  # type: ignore[attr-defined]
+            return [dict(r._mapping) for r in conn.execute(text(sql))]  # type: ignore[attr-defined]
 
     def refresh(self) -> None:
         try:
@@ -124,7 +125,7 @@ class CategoryView(QWidget):
             return
         try:
             with self._engine.begin() as conn:
-                conn.execute("INSERT INTO categories(name) VALUES (:name)", {"name": name})
+                conn.execute(text("INSERT INTO categories(name) VALUES (:name)"), {"name": name})
             self.refresh()
         except Exception as exc:
             QMessageBox.critical(self, "新增失敗", f"無法新增：{exc}")
@@ -146,7 +147,7 @@ class CategoryView(QWidget):
         try:
             with self._engine.begin() as conn:
                 conn.execute(
-                    "UPDATE categories SET name = :name WHERE id = :id",
+                    text("UPDATE categories SET name = :name WHERE id = :id"),
                     {"name": name, "id": category_id},
                 )
             self.refresh()
@@ -162,7 +163,7 @@ class CategoryView(QWidget):
             return
         try:
             with self._engine.begin() as conn:
-                conn.execute("DELETE FROM categories WHERE id = :id", {"id": category_id})
+                conn.execute(text("DELETE FROM categories WHERE id = :id"), {"id": category_id})
             self.refresh()
         except Exception as exc:
             QMessageBox.critical(self, "刪除失敗", f"無法刪除：{exc}")

@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 )
 
 from models.database import get_engine
+from sqlalchemy import text
 
 
 class _BooksTableModel(QAbstractTableModel):
@@ -147,7 +148,7 @@ class BookView(QWidget):
             "FROM books ORDER BY title, author, version, source"
         )
         with self._engine.connect() as conn:
-            rows = [dict(r._mapping) for r in conn.execute(sql)]  # type: ignore[attr-defined]
+            rows = [dict(r._mapping) for r in conn.execute(text(sql))]  # type: ignore[attr-defined]
         return rows
 
     def reload(self) -> None:
@@ -170,7 +171,7 @@ class BookView(QWidget):
         )
         try:
             with self._engine.begin() as conn:
-                conn.execute(sql, values)
+                conn.execute(text(sql), values)
         except Exception as exc:
             QMessageBox.critical(self, "新增失敗", f"無法新增書籍：{exc}")
             return
@@ -199,7 +200,7 @@ class BookView(QWidget):
         )
         try:
             with self._engine.begin() as conn:
-                conn.execute(sql, values)
+                conn.execute(text(sql), values)
         except Exception as exc:
             QMessageBox.critical(self, "更新失敗", f"無法更新書籍：{exc}")
             return
@@ -216,7 +217,7 @@ class BookView(QWidget):
         sql = "DELETE FROM books WHERE id=:id"
         try:
             with self._engine.begin() as conn:
-                conn.execute(sql, {"id": data["id"]})
+                conn.execute(text(sql), {"id": data["id"]})
         except Exception as exc:
             QMessageBox.critical(self, "刪除失敗", f"無法刪除書籍：{exc}")
             return

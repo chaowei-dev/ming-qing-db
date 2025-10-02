@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 from models.database import get_engine
+from sqlalchemy import text
 
 
 class _EntriesTableModel(QAbstractTableModel):
@@ -176,7 +177,7 @@ class EntryView(QWidget):
             "ORDER BY b.title, r.roll, e.entry_name LIMIT 1000"
         )
         with self._engine.connect() as conn:
-            rows = [dict(r._mapping) for r in conn.execute(sql)]  # type: ignore[attr-defined]
+            rows = [dict(r._mapping) for r in conn.execute(text(sql))]  # type: ignore[attr-defined]
         return rows
 
     def reload(self) -> None:
@@ -196,19 +197,19 @@ class EntryView(QWidget):
             raise ValueError("卷與卷名不得為空")
         with self._engine.begin() as conn:
             row = conn.execute(
-                "SELECT id FROM rolls WHERE book_id=:bid AND roll=:r AND roll_name=:rn",
+                text("SELECT id FROM rolls WHERE book_id=:bid AND roll=:r AND roll_name=:rn"),
                 {"bid": book_id, "r": roll, "rn": roll_name},
             ).fetchone()
             if row:
                 return int(row[0])
             res = conn.execute(
-                "INSERT INTO rolls(roll, roll_name, book_id) VALUES (:r, :rn, :bid)",
+                text("INSERT INTO rolls(roll, roll_name, book_id) VALUES (:r, :rn, :bid)"),
                 {"r": roll, "rn": roll_name, "bid": book_id},
             )
         # After transaction, fetch created id in a new read connection
         with self._engine.connect() as conn:
             row = conn.execute(
-                "SELECT id FROM rolls WHERE book_id=:bid AND roll=:r AND roll_name=:rn",
+                text("SELECT id FROM rolls WHERE book_id=:bid AND roll=:r AND roll_name=:rn"),
                 {"bid": book_id, "r": roll, "rn": roll_name},
             ).fetchone()
             return int(row[0])
@@ -225,7 +226,7 @@ class EntryView(QWidget):
             roll_id = self._ensure_roll(values["book_id"], values["roll"], values["roll_name"])
             with self._engine.begin() as conn:
                 conn.execute(
-                    "INSERT INTO entries(entry_name, roll_id, remarks) VALUES (:en, :rid, :rm)",
+                    text("INSERT INTO entries(entry_name, roll_id, remarks) VALUES (:en, :rid, :rm)"),
                     {"en": values["entry_name"], "rid": roll_id, "rm": values["remarks"]},
                 )
         except Exception as exc:
@@ -257,7 +258,7 @@ class EntryView(QWidget):
             new_roll_id = self._ensure_roll(values["book_id"], values["roll"], values["roll_name"])
             with self._engine.begin() as conn:
                 conn.execute(
-                    "UPDATE entries SET entry_name=:en, roll_id=:rid, remarks=:rm WHERE id=:id",
+                    text("UPDATE entries SET entry_name=:en, roll_id=:rid, remarks=:rm WHERE id=:id"),
                     {"en": values["entry_name"], "rid": new_roll_id, "rm": values["remarks"], "id": data["id"]},
                 )
         except Exception as exc:
@@ -275,7 +276,7 @@ class EntryView(QWidget):
             return
         try:
             with self._engine.begin() as conn:
-                conn.execute("DELETE FROM entries WHERE id=:id", {"id": data["id"]})
+                conn.execute(text("DELETE FROM entries WHERE id=:id"), {"id": data["id"]})
         except Exception as exc:
             QMessageBox.critical(self, "刪除失敗", f"無法刪除篇目：{exc}")
             return
