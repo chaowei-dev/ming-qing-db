@@ -9,7 +9,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("明清文獻資料庫（桌面版）")
-        self.resize(1000, 700)
+        self.resize(1440, 900)
 
         self.tab_widget = QTabWidget(self)
         self.setCentralWidget(self.tab_widget)
