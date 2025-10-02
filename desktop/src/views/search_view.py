@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QSizePolicy,
     QCheckBox,
+    QHeaderView,
 )
 
 from models.database import get_engine
@@ -147,6 +148,11 @@ class SearchView(QWidget):
         self._table = QTableView(self)
         self._model = _SearchResultModel([])
         self._table.setModel(self._model)
+        header = self._table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        # Make 篇目(0) 和 書名(1) take most remaining width
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
 
         layout = QVBoxLayout(self)
         layout.addLayout(row1)

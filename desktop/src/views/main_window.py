@@ -17,6 +17,12 @@ class MainWindow(QMainWindow):
         self._init_tabs()
 
     def _init_tabs(self) -> None:
+        # 搜尋
+        search_tab = QWidget(self)
+        search_layout = QVBoxLayout(search_tab)
+        search_layout.addWidget(SearchView(search_tab))
+        self.tab_widget.addTab(search_tab, "搜尋")
+
         # 類別
         categories_tab = QWidget(self)
         categories_layout = QVBoxLayout(categories_tab)
@@ -34,9 +40,3 @@ class MainWindow(QMainWindow):
         entries_layout = QVBoxLayout(entries_tab)
         entries_layout.addWidget(EntryView(entries_tab))
         self.tab_widget.addTab(entries_tab, "篇目")
-
-        # 搜尋
-        search_tab = QWidget(self)
-        search_layout = QVBoxLayout(search_tab)
-        search_layout.addWidget(SearchView(search_tab))
-        self.tab_widget.addTab(search_tab, "搜尋")
