@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from PyQt6.QtWidgets import QApplication
 from views.main_window import MainWindow
+from utils.bootstrap import initialize_database_if_needed
 
 
 def _load_qss_if_exists(app: QApplication) -> None:
@@ -19,6 +20,8 @@ def _load_qss_if_exists(app: QApplication) -> None:
 def main() -> None:
     app = QApplication([])
     _load_qss_if_exists(app)
+
+    initialize_database_if_needed()
 
     window = MainWindow()
     window.show()

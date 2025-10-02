@@ -15,10 +15,10 @@
 - [x] 建立 `resources/database/init.sql`（簡化表；不含觸發器與遷移表）
 
 ### 3. 資料庫
-- [ ] 建立 `categories` / `books` / `rolls` / `entries` 基本表
-- [ ] 建立唯一鍵與必要索引（避免重複與加速查詢）
-- [ ] 首次啟動：若無 `data/database.db` 則自動執行 `init.sql`
-- [ ] 取消：多 Engine、`schema_migrations`、`updated_at` 觸發器（後續需要再加）
+- [x] 建立 `categories` / `books` / `rolls` / `entries` 基本表
+- [x] 建立唯一鍵與必要索引（避免重複與加速查詢）
+- [x] 首次啟動：若無 `data/database.db` 則自動執行 `init.sql`
+- [x] 取消：多 Engine、`schema_migrations`、`updated_at` 觸發器（後續需要再加）
 
 ### 4. UI
 - [ ] 分頁或側欄切換：書籍、篇目、搜尋
