@@ -1,33 +1,29 @@
-## 明清文獻資料庫單機版
+## 明清文獻資料庫（桌面版）
 
-本專案是明清文獻資料庫的單機版本，使用 PyQt6 開發桌面應用程式，SQLite 作為本地資料庫。對應前後端已開發的功能，重置一個本地端的版本。旨在提供完整的文獻管理、搜尋、匯入匯出等功能，與網頁版保持資料格式兼容。
+本專案為個人使用的桌面版，使用 PyQt6 與 SQLite。目標是離線管理與查找資料，支援基本的書籍／卷／篇目維護與 CSV 匯入匯出。
 
 ### 1. 開發環境設置
 
 #### 系統要求
-- Python 3.9+
-- Windows 10+ / macOS 10.15+ / Linux (Ubuntu 18.04+)
+- Python 3.10+
+- Windows / macOS / Linux
 
 #### 所需安裝套件
 ```bash
-# 推薦使用 requirements.txt（已釘選次要版本）
+# 推薦：使用 requirements.txt（僅最小依賴）
 pip install -r requirements.txt
 
-# 或分別安裝（同等版本範圍）
+# 或分別安裝
 pip install PyQt6==6.6.*
-pip install pandas==2.2.*
-pip install openpyxl==3.1.*
 pip install SQLAlchemy==2.0.*
 pip install appdirs==1.4.*
 
-# 開發工具
-pip install PyInstaller==6.6.*
-pip install pytest==8.3.*
-pip install black==24.8.*
-pip install flake8==7.1.*
+# 需要 Excel 或大量匯入時再安裝
+pip install pandas==2.2.*
+pip install openpyxl==3.1.*
 ```
 
-### 2. 專案結構設計
+### 2. 專案結構
 
 ```
 desktop/
@@ -38,41 +34,26 @@ desktop/
 │   │
 │   ├── models/            # 資料模型層
 │   │   ├── __init__.py
-│   │   ├── database.py    # 資料庫連接與設置
-│   │   ├── base.py        # 基礎模型類
-│   │   ├── category.py    # Category 模型
-│   │   ├── book.py        # Book 模型
-│   │   ├── roll.py        # Roll 模型
-│   │   └── entry.py       # Entry 模型
+│   │   └── database.py    # 資料庫連接（單一 Engine）
 │   │
 │   ├── views/             # 界面視圖層
 │   │   ├── __init__.py
-│   │   ├── main_window.py         # 主視窗
-│   │   ├── dashboard_view.py      # 統計儀表板
-│   │   ├── category_view.py       # 類別管理視圖
+│   │   ├── main_window.py         # 主視窗（書籍／篇目／搜尋）
 │   │   ├── book_view.py           # 書籍管理視圖
 │   │   ├── entry_view.py          # 篇目管理視圖
-│   │   ├── search_view.py         # 搜尋視圖
-│   │   ├── import_export_view.py  # 資料匯入匯出視圖
-│   │   └── settings_view.py       # 設定頁面
+│   │   └── search_view.py         # 搜尋視圖
 │   │
-│   ├── controllers/       # 控制器層
+│   ├── controllers/       # 控制器層（可與 views 合併）
 │   │   ├── __init__.py
-│   │   ├── category_controller.py
 │   │   ├── book_controller.py
-│   │   ├── entry_controller.py
-│   │   ├── search_controller.py
-│   │   └── import_export_controller.py
+│   │   └── entry_controller.py
 │   │
 │   └── utils/             # 實用工具
 │       ├── __init__.py
 │       ├── import_csv.py          # CSV 匯入功能
 │       ├── export_csv.py          # CSV 匯出功能
-│       ├── backup.py              # 資料庫備份功能
-│       ├── logger.py              # 日誌系統
-│       ├── validators.py          # 資料驗證
-│       ├── database_migrator.py   # 資料庫遷移工具
-│       └── constants.py           # 常數定義
+│       ├── backup.py              # 簡易備份
+│       └── logger.py              # 日誌（基本）
 │
 ├── resources/             # 資源文件
 │   ├── icons/             # 圖標文件
@@ -85,13 +66,7 @@ desktop/
 │   │   └── dark_theme.qss
 │   └── database/          # 資料庫相關
 │       ├── init.sql       # 初始化腳本
-│       └── migrations/    # 資料庫遷移腳本
-│
-├── tests/                 # 單元測試
-│   ├── __init__.py
-│   ├── test_models.py
-│   ├── test_controllers.py
-│   └── test_utils.py
+│       └── migrations/
 │
 ├── data/                  # 資料目錄（安裝後使用）
 │   ├── database.db        # SQLite資料庫文件
@@ -101,15 +76,15 @@ desktop/
 ├── logs/                  # 日誌目錄
 │   └── app.log
 │
-├── build_app.spec         # PyInstaller打包配置
+├── build_app.spec
 ├── requirements.txt       # 依賴套件
-├── setup.py              # 安裝腳本
+├── setup.py
 └── README.md             # 說明文檔
 ```
 
 ### 3. 資料庫設計
 
-#### 3.1 資料表結構（對應 Prisma）
+#### 3.1 資料表結構
 ```sql
 -- 類別表（對應 Prisma: Category）
 CREATE TABLE categories (
@@ -167,14 +142,13 @@ CREATE INDEX idx_entries_roll_id ON entries(roll_id);
 -- 新插入使用 DEFAULT CURRENT_TIMESTAMP。
 ```
 
-#### 3.2 與 Web/Prisma 對齊說明
-- 欄位命名：桌面端 SQLite 採用底線風格（如 `created_at`），對應 Prisma / 後端的駝峰（如 `createdAt`）。
-- 外鍵行為：`books.category_id` 於刪除類別時採 `SET NULL`，其他外鍵為 `RESTRICT`（與後端一致）。
-- 補充索引：為常用查詢路徑添加索引（如 `books(title, author)`、`rolls(book_id)`、`entries(roll_id)`）。
- - 單機桌面版為單使用者，不含認證/登入/權限；認證相關為 Web 版僅。
+#### 3.2 設計備註
+- 單機單人，不含認證／權限。
+- 採底線命名（如 `created_at`）。
+- 僅保留必要索引與唯一鍵，避免過度設計。
  
 
-#### 3.3 資料完整性與維護（唯一鍵、觸發器、遷移、PRAGMA）
+#### 3.3 資料完整性
 
 ```sql
 -- 唯一性約束（避免重複資料）
@@ -190,91 +164,35 @@ ON rolls(book_id, roll, roll_name);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_entries_unique
 ON entries(roll_id, entry_name);
 
--- updated_at 自動更新觸發器（僅在關鍵欄位變更時觸發，避免遞迴）
--- 類別表：當 name 變更時更新 updated_at
-CREATE TRIGGER IF NOT EXISTS categories_set_updated_at
-AFTER UPDATE OF name ON categories
-BEGIN
-  UPDATE categories SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;
-
--- 書籍表：當主要資訊或關聯變更時更新 updated_at
-CREATE TRIGGER IF NOT EXISTS books_set_updated_at
-AFTER UPDATE OF title, author, version, source, category_id, remarks ON books
-BEGIN
-  UPDATE books SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;
-
--- 卷表：當卷號/卷名/所屬書籍變更時更新 updated_at
-CREATE TRIGGER IF NOT EXISTS rolls_set_updated_at
-AFTER UPDATE OF roll, roll_name, book_id ON rolls
-BEGIN
-  UPDATE rolls SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;
-
--- 篇目表：當名稱/所屬卷/備註變更時更新 updated_at
-CREATE TRIGGER IF NOT EXISTS entries_set_updated_at
-AFTER UPDATE OF entry_name, roll_id, remarks ON entries
-BEGIN
-  UPDATE entries SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;
-
--- 簡易遷移版本表（記錄已套用的資料庫版本）
--- 用於記錄每次結構升級的版本與套用時間，避免重複與遺漏
-CREATE TABLE IF NOT EXISTS schema_migrations (
-  version INTEGER PRIMARY KEY,
-  applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 連線層 PRAGMA 建議（於程式啟動後設定）
-PRAGMA foreign_keys = ON;    -- 啟用外鍵約束
-PRAGMA journal_mode = WAL;   -- 提升讀寫並行性
-PRAGMA synchronous = NORMAL; -- 與 WAL 搭配的平衡模式
+-- 觸發器與遷移表：目前不實作（需要時再加入）
+-- PRAGMA 建議：啟動後設定 foreign_keys/WAL/synchronous/busy_timeout
 ```
 
-範例（SQLAlchemy 2.x 於連線建立時設定 PRAGMA）：
+範例（SQLAlchemy 2.x，單一 Engine 設定 PRAGMA）：
 
 ```python
 from sqlalchemy import event, create_engine
 
-# UI 主執行緒專用 Engine（讀寫）
-ui_engine = create_engine(
+# 單一 Engine（UI 與匯入共用即可）
+engine = create_engine(
     "sqlite:///data/database.db",
     future=True,
     pool_pre_ping=True,
     connect_args={"timeout": 5},  # busy_timeout 仍需以 PRAGMA 設定
 )
 
-@event.listens_for(ui_engine, "connect")
-def set_sqlite_pragmas_for_ui(dbapi_conn, _):
+@event.listens_for(engine, "connect")
+def set_sqlite_pragmas(dbapi_conn, _):
     cur = dbapi_conn.cursor()
     cur.execute("PRAGMA foreign_keys=ON;")
     cur.execute("PRAGMA journal_mode=WAL;")
     cur.execute("PRAGMA synchronous=NORMAL;")
     cur.execute("PRAGMA busy_timeout=5000;")
-    cur.close()
-
-# 匯入背景執行緒專用 Engine（避免共用連線）
-import_engine = create_engine(
-    "sqlite:///data/database.db",
-    future=True,
-    pool_pre_ping=True,
-)
-
-@event.listens_for(import_engine, "connect")
-def set_sqlite_pragmas_for_import(dbapi_conn, _):
-    cur = dbapi_conn.cursor()
-    cur.execute("PRAGMA foreign_keys=ON;")
-    cur.execute("PRAGMA journal_mode=WAL;")
-    cur.execute("PRAGMA synchronous=NORMAL;")
-    cur.execute("PRAGMA busy_timeout=5000;")
-    cur.execute("PRAGMA temp_store=MEMORY;")
-    cur.execute("PRAGMA cache_size=-200000;")  # 約 200MB，視記憶體調整
     cur.close()
 ```
 
-#### 3.4 全文搜尋（可選）
-- 需要全文檢索時，採用 SQLite FTS5 以虛表儲存可搜尋內容，並以觸發器同步正表與 FTS 表；本版本先不內建，視需求加入。
+#### 3.4 全文搜尋
+- 需要全文檢索時，可採用 SQLite FTS5 以虛表儲存可搜尋內容，並以觸發器同步正表與 FTS 表。
 
 ### 4. UI 設計概要
 
@@ -286,87 +204,44 @@ def set_sqlite_pragmas_for_import(dbapi_conn, _):
 
 #### 功能視圖設計
 
-1. **儀表板視圖 (Dashboard)**
-   - 資料庫統計信息（總書籍數、總篇目數等）
-   - 最近操作記錄
-   - 快速搜尋框
-   - 系統狀態指示器
+1. 儀表板可省略，於狀態列顯示基本資訊
 
-2. **類別管理視圖**
-   - 類別列表（表格顯示）
-   - 新增/編輯/刪除類別
-   - 類別統計信息
-   - 批量操作功能
+2. 類別管理可後續加入（可先在書籍中以自由文字）
 
-3. **書籍管理視圖**
-   - 書籍列表（表格顯示，支援排序）
-   - 進階篩選功能（按類別、作者、版本等）
-   - 新增/編輯/刪除書籍
-   - 書籍詳情查看
-   - 批量匯入/匯出
+3. 書籍管理：列表／新增／編輯／刪除；關鍵字搜尋（title/author）
 
-4. **篇目管理視圖**
-   - 篇目列表（表格顯示）
-   - 篩選功能（按書籍、卷）
-   - 新增/編輯/刪除篇目
-   - 篇目搜尋功能
-   - 批量操作
+4. 篇目管理：列表／新增／編輯／刪除；按書籍／卷篩選
 
-5. **搜尋視圖**
-   - 多欄位搜尋表單
-   - 搜尋歷史記錄
-   - 搜尋結果列表
-   - 結果匯出功能
-   - 進階搜尋選項
+5. 搜尋視圖：單頁關鍵字搜尋（多欄位 OR），結果可導出 CSV
 
-6. **匯入/匯出視圖**
-   - 檔案選擇界面
-   - 匯入進度指示器
-   - 資料預覽功能
-   - 錯誤處理和報告
-   - 匯出格式選擇
+6. 匯入/匯出：單視窗；匯入 CSV（遇重複可跳過）、匯出 CSV
 
-7. **設定頁面**
-   - 資料庫設定
-   - 界面主題選擇
-   - 備份設定
-   - 匯入/匯出設定
-   - 系統資訊
+7. 設定可先用簡單對話框設定資料目錄（可寫入檔）
 
 ### 5. 核心功能
 
 #### 資料管理
-- ✅ 類別管理（新增、編輯、刪除）
-- ✅ 書籍管理（新增、編輯、刪除、搜尋）
-- ✅ 卷管理（新增、編輯、刪除）
-- ✅ 篇目管理（新增、編輯、刪除、搜尋）
-- ✅ 資料驗證和完整性檢查
+- ✅ 書籍管理（新增／編輯／刪除／搜尋）
+- ✅ 卷管理（新增／編輯／刪除）
+- ✅ 篇目管理（新增／編輯／刪除／搜尋）
 
 #### 搜尋功能
-- （可選）全文搜尋（FTS5）
-- ✅ 多欄位組合搜尋
-- ✅ 搜尋歷史記錄
-- ✅ 搜尋結果排序和篩選
-- ✅ 搜尋結果匯出
+- ✅ 多欄位關鍵字 OR 搜尋（title/author/roll/entry）
+- ✅ 搜尋結果匯出 CSV
+ - FTS5、搜尋歷史、排序篩選可於需要時加入
 
 #### 資料匯入匯出
-- ✅ CSV 格式匯入/匯出
-- ✅ Excel 格式匯入/匯出
-- ✅ 與網頁版格式兼容
-- ✅ 批量資料處理
-- ✅ 資料驗證和錯誤報告
+- ✅ CSV 匯入／匯出（UTF-8）
+ - Excel 匯入／匯出可於需要時安裝後使用
+ - 大量批次處理、錯誤報表可於需要時加入
 
 #### 備份還原
-- ✅ 自動備份功能
-- ✅ 手動備份功能
-- ✅ 備份檔案管理
-- ✅ 資料還原功能
+- ✅ 一鍵備份（複製檔案）與手動還原
+ - 備份排程與備份管理 UI 可於需要時加入
 
 #### 系統功能
-- ✅ 日誌記錄
-- ✅ 錯誤處理
-- ✅ 設定管理
-- ✅ 資料庫遷移工具
+- ✅ 基本日誌與錯誤處理
+ - 設定頁、資料庫遷移工具可於需要時加入
 
 ### 6. 安裝與使用說明
 
@@ -383,10 +258,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 # 3. 安裝依賴
 pip install -r requirements.txt
 
-# 4. 初始化資料庫
-python src/utils/database_migrator.py
-
-# 5. 運行應用程式
+# 4. 運行應用程式（首次啟動自動建立資料庫與目錄）
 python src/main.py
 ```
 
@@ -452,11 +324,9 @@ pyinstaller build_app.spec
 3. 或使用資料庫遷移工具直接轉換
 
 #### 資料庫升級
-- 支援自動資料庫結構升級
-- 提供資料庫備份功能
-- 支援版本回滾
+- 不提供自動遷移；若未來調整結構，請先備份後再重建
 
-#### 大量匯入策略（至 1,000,000 筆）
+#### 大量匯入策略（需要時再採用）
 - 目標：在單機 SQLite 上以「可靠、可回復」方式大量匯入，不阻塞 UI、可觀測進度、資料不重複。
 - 前提：CSV 欄位順序與 Web 版一致（title, author, roll, rollName, entry, version, source, remarks）。
 
@@ -515,7 +385,7 @@ ON CONFLICT(roll_id, entry_name) DO UPDATE SET
 - 效能：集合式 SQL 大幅減少往返與逐列查詢；staging 可讓 SQLite 以索引有效合併。
 - 驗證：匯入前可在應用層驗證欄位空值/長度/非法字元；錯誤列輸出到報表（CSV/Excel）不影響主流程。
 
-可選優化（僅在需要時啟用）
+可考慮的優化（僅在需要時啟用）
 - 暫時關閉非唯一索引（如 `idx_books_title_author`、`idx_rolls_book_id`、`idx_entries_roll_id`）於大量匯入前，匯入完畢再重建；唯一索引需保留以確保冪等。
 - 匯入會話期間可調整 PRAGMA（僅針對此匯入連線）：
   - `PRAGMA busy_timeout=5000;`（避免短暫鎖直接失敗）
@@ -560,48 +430,26 @@ FTS（若啟用）
 
 ### 10. 版本歷史
 
-#### v1.0.0 (計劃中)
-- 基礎功能實現
-- 資料管理功能
-- 搜尋功能
-- 匯入匯出功能
+#### v0.1.0（規劃）
+- 書籍／卷／篇目 CRUD
+- 關鍵字搜尋與 CSV 匯出
+- CSV 匯入（遇重複跳過）
 
 #### 未來計劃
-- 支援更多資料格式
-- 進階搜尋功能
-- 資料視覺化
-- 多語言支援
+- Excel 匯入／匯出
+- 進階搜尋（排序、篩選、FTS5）
+- 類別管理與設定頁
+- 打包安裝程式
 
-### 11. 前後端功能清單（實作指引）
+### 11. 功能清單（對齊說明）
 
-#### 後端（對照既有 Web API 能力）
-- 認證（Web 版僅；桌面端不實作）
-  - POST /auth/register：使用者註冊
-  - POST /auth/login：使用者登入（取得 Token）
-- 類別（Category）
-  - 取得列表
-  - 新增（Admin）／更新（Admin）／刪除（Admin）
-- 書籍（Book）
-  - 分頁列表＋條件搜尋（size/page/keyword）
-  - 取得單筆／取得統計數（count）
-  - 取得書籍細節（含卷、類別摘要）
-  - 新增（Admin）／更新（Admin）／刪除（Admin）
-- 篇目（Entry）
-  - 分頁列表＋條件搜尋（多欄位）
-  - 取得統計數（count）
-  - 新增（Admin）：按 title/author/version/source 判斷 Book，按 roll/roll_name 判斷 Roll，最後建立 Entry（支援 remarks）
+（桌面端採本地 SQLite，不呼叫 Web API；此段僅為與網頁版語意對齊的參考，可略讀。）
 
-（桌面端採本地 SQLite，不直接呼叫 Web API；此清單用於確保功能語意一致與資料互通。）
-
-#### 桌面端前端（PyQt6）實作清單
-- 類別管理：列表／新增／編輯／刪除
-- 書籍管理：列表（分頁）／篩選（類別、作者、版本）／詳情／新增／編輯／刪除
-- 篇目管理：列表（分頁）／搜尋（多欄位）／新增／編輯／刪除
-- 匯入匯出：
-  - 匯入 CSV：欄位順序與 Web 版一致（title, author, roll, rollName, entry, version, source, remarks）
-  - 匯出 CSV：支援列表或查詢結果匯出
-- 搜尋：多欄位關鍵字組合搜尋（可後續加入 FTS5 全文檢索）
-- 備份：一鍵備份/還原 SQLite；備份檔案管理
-- 設定：資料目錄、主題、匯入/匯出預設
+#### 桌面端（PyQt6）實作清單
+- 書籍管理：列表／搜尋（title/author）／新增／編輯／刪除
+- 篇目管理：列表／搜尋（roll/entry）／新增／編輯／刪除
+- 匯入匯出：CSV 匯入（欄位：title, author, roll, rollName, entry, version, source, remarks）；CSV 匯出
+- 備份：一鍵備份與手動還原
+ - 類別管理、設定頁、進階搜尋、Excel、FTS5 可於需要時加入
 
 以上清單可作為開發勾選表，逐項完成後即可達到與現有前後端一致的資料與功能語意。
