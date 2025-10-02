@@ -252,8 +252,8 @@ git clone [repository-url]
 cd desktop
 
 # 2. 創建虛擬環境
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+python -m venv mignqing
+source mignqing/bin/activate  # Windows: venv\Scripts\activate
 
 # 3. 安裝依賴
 pip install -r requirements.txt

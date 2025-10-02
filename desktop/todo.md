@@ -21,10 +21,10 @@
 - [x] 取消：多 Engine、`schema_migrations`、`updated_at` 觸發器（後續需要再加）
 
 ### 4. UI
-- [ ] 分頁或側欄切換：書籍、篇目、搜尋
-- [ ] 列表 + 基礎 CRUD 對話框
-- [ ] 搜尋欄：title／author／roll／entry 關鍵字
-- [ ] 套用 `main.qss`（後續再美化）
+- [x] 分頁或側欄切換：書籍、篇目、搜尋
+- [x] 列表 + 基礎 CRUD 對話框
+- [x] 搜尋欄：title／author／roll／entry 關鍵字
+- [x] 套用 `main.qss`（後續再美化）
 
 ### 5. 核心功能
 - [ ] 書籍：列表／新增／編輯／刪除（無類別也可運作）
