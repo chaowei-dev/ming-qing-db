@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QFormLayout,
     QLineEdit,
     QDialogButtonBox,
+    QComboBox,
 )
 
 from models.database import get_engine
@@ -30,6 +31,7 @@ class _BooksTableModel(QAbstractTableModel):
             ("author", "作者"),
             ("version", "版本"),
             ("source", "來源"),
+            ("category_name", "類別"),
             ("remarks", "備註"),
         ]
 
@@ -64,15 +66,19 @@ class _BooksTableModel(QAbstractTableModel):
 
 
 class _BookDialog(QDialog):
-    def __init__(self, parent: Optional[QWidget] = None, init_values: Optional[Dict[str, str]] = None):
+    def __init__(self, engine, parent: Optional[QWidget] = None, init_values: Optional[Dict[str, Any]] = None):
         super().__init__(parent)
         self.setWindowTitle("書籍")
+        self._engine = engine
 
         self.title_edit = QLineEdit(self)
         self.author_edit = QLineEdit(self)
         self.version_edit = QLineEdit(self)
         self.source_edit = QLineEdit(self)
         self.remarks_edit = QLineEdit(self)
+        self.category_cb = QComboBox(self)
+
+        self._load_categories()
 
         if init_values:
             self.title_edit.setText(init_values.get("title", ""))
@@ -80,12 +86,22 @@ class _BookDialog(QDialog):
             self.version_edit.setText(init_values.get("version", ""))
             self.source_edit.setText(init_values.get("source", ""))
             self.remarks_edit.setText(init_values.get("remarks", ""))
+            # set category selection
+            init_cat_id = init_values.get("category_id")
+            if init_cat_id is None:
+                self.category_cb.setCurrentIndex(0)
+            else:
+                for i in range(self.category_cb.count()):
+                    if self.category_cb.itemData(i) == init_cat_id:
+                        self.category_cb.setCurrentIndex(i)
+                        break
 
         form = QFormLayout()
         form.addRow("標題", self.title_edit)
         form.addRow("作者", self.author_edit)
         form.addRow("版本", self.version_edit)
         form.addRow("來源", self.source_edit)
+        form.addRow("類別", self.category_cb)
         form.addRow("備註", self.remarks_edit)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel, self)
@@ -96,12 +112,23 @@ class _BookDialog(QDialog):
         layout.addLayout(form)
         layout.addWidget(buttons)
 
-    def get_values(self) -> Dict[str, str]:
+    def _load_categories(self) -> None:
+        # First item: no category
+        self.category_cb.clear()
+        self.category_cb.addItem("（未分類）", None)
+        sql = "SELECT id, name FROM categories ORDER BY name"
+        with self._engine.connect() as conn:
+            for r in conn.execute(text(sql)):
+                d = dict(r._mapping)  # type: ignore[attr-defined]
+                self.category_cb.addItem(d["name"], d["id"])
+
+    def get_values(self) -> Dict[str, Any]:
         return {
             "title": self.title_edit.text().strip(),
             "author": self.author_edit.text().strip(),
             "version": self.version_edit.text().strip(),
             "source": self.source_edit.text().strip(),
+            "category_id": self.category_cb.currentData(),
             "remarks": self.remarks_edit.text().strip() or None,
         }
 
@@ -144,8 +171,11 @@ class BookView(QWidget):
     # Data operations
     def _fetch_books(self) -> List[Dict[str, Any]]:
         sql = (
-            "SELECT id, title, author, version, source, COALESCE(remarks, '') AS remarks "
-            "FROM books ORDER BY title, author, version, source"
+            "SELECT b.id, b.title, b.author, b.version, b.source, "
+            "b.category_id, COALESCE(c.name, '') AS category_name, "
+            "COALESCE(b.remarks, '') AS remarks "
+            "FROM books b LEFT JOIN categories c ON b.category_id = c.id "
+            "ORDER BY b.title, b.author, b.version, b.source"
         )
         with self._engine.connect() as conn:
             rows = [dict(r._mapping) for r in conn.execute(text(sql))]  # type: ignore[attr-defined]
@@ -158,7 +188,7 @@ class BookView(QWidget):
             QMessageBox.critical(self, "讀取失敗", f"讀取書籍時發生錯誤：{exc}")
 
     def add_book(self) -> None:
-        dlg = _BookDialog(self)
+        dlg = _BookDialog(self._engine, self)
         if dlg.exec() != QDialog.DialogCode.Accepted:
             return
         values = dlg.get_values()
@@ -167,7 +197,7 @@ class BookView(QWidget):
             return
         sql = (
             "INSERT INTO books(title, author, version, source, category_id, remarks) "
-            "VALUES (:title, :author, :version, :source, NULL, :remarks)"
+            "VALUES (:title, :author, :version, :source, :category_id, :remarks)"
         )
         try:
             with self._engine.begin() as conn:
@@ -189,14 +219,14 @@ class BookView(QWidget):
             QMessageBox.information(self, "未選擇", "請先選擇一筆書籍。")
             return
         data = self._model.get_row(row)
-        dlg = _BookDialog(self, init_values=data)
+        dlg = _BookDialog(self._engine, self, init_values=data)
         if dlg.exec() != QDialog.DialogCode.Accepted:
             return
         values = dlg.get_values()
         values["id"] = data["id"]
         sql = (
             "UPDATE books SET title=:title, author=:author, version=:version, "
-            "source=:source, remarks=:remarks WHERE id=:id"
+            "source=:source, category_id=:category_id, remarks=:remarks WHERE id=:id"
         )
         try:
             with self._engine.begin() as conn:
