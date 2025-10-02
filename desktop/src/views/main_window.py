@@ -1,5 +1,8 @@
 from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabel
 from .search_view import SearchView
+from .category_view import CategoryView
+from .book_view import BookView
+from .entry_view import EntryView
 
 
 class MainWindow(QMainWindow):
@@ -14,16 +17,22 @@ class MainWindow(QMainWindow):
         self._init_tabs()
 
     def _init_tabs(self) -> None:
+        # 類別
+        categories_tab = QWidget(self)
+        categories_layout = QVBoxLayout(categories_tab)
+        categories_layout.addWidget(CategoryView(categories_tab))
+        self.tab_widget.addTab(categories_tab, "類別")
+
         # 書籍
         books_tab = QWidget(self)
         books_layout = QVBoxLayout(books_tab)
-        books_layout.addWidget(QLabel("書籍管理（待實作）", books_tab))
+        books_layout.addWidget(BookView(books_tab))
         self.tab_widget.addTab(books_tab, "書籍")
 
         # 篇目
         entries_tab = QWidget(self)
         entries_layout = QVBoxLayout(entries_tab)
-        entries_layout.addWidget(QLabel("篇目管理（待實作）", entries_tab))
+        entries_layout.addWidget(EntryView(entries_tab))
         self.tab_widget.addTab(entries_tab, "篇目")
 
         # 搜尋
