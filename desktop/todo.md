@@ -4,15 +4,15 @@
 - [ ] 單人使用、離線為主、資料量約 1,0000,000 筆
 
 ### 1. 開發環境
-- [ ] 產生 `requirements.txt`（PyQt6、SQLAlchemy、appdirs）
+- [x] 產生 `requirements.txt`（PyQt6、SQLAlchemy、appdirs）
 
 ### 2. 專案骨架
-- [ ] 建立 `src/`、`resources/`、`data/`、`logs/`
-- [ ] 新增 `src/main.py`（載入 QSS、主視窗啟動）
-- [ ] 新增 `src/models/database.py`（單一 Engine，啟用外鍵）
-- [ ] 新增 `src/views/main_window.py`（分頁：書籍／篇目／搜尋）
-- [ ] 放置 `resources/styles/main.qss`（可先留白）
-- [ ] 建立 `resources/database/init.sql`（簡化表；不含觸發器與遷移表）
+- [x] 建立 `src/`、`resources/`、`data/`、`logs/`
+- [x] 新增 `src/main.py`（載入 QSS、主視窗啟動）
+- [x] 新增 `src/models/database.py`（單一 Engine，啟用外鍵）
+- [x] 新增 `src/views/main_window.py`（分頁：書籍／篇目／搜尋）
+- [x] 放置 `resources/styles/main.qss`（可先留白）
+- [x] 建立 `resources/database/init.sql`（簡化表；不含觸發器與遷移表）
 
 ### 3. 資料庫
 - [ ] 建立 `categories` / `books` / `rolls` / `entries` 基本表

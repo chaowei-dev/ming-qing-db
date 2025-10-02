@@ -1,0 +1,4 @@
+# Minimum dependencies for the desktop app
+PyQt6==6.6.*
+SQLAlchemy==2.0.*
+appdirs==1.4.*

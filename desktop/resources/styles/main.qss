@@ -1,0 +1,18 @@
+/* Minimal base styles; refine later */
+QMainWindow {
+    background: #f9f9fb;
+}
+
+QTabWidget::pane {
+    border: 1px solid #d0d5dd;
+    background: white;
+}
+
+QTabBar::tab {
+    padding: 6px 12px;
+}
+
+QStatusBar {
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+}
