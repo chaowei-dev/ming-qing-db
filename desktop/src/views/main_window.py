@@ -1,4 +1,5 @@
 from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabel
+from .search_view import SearchView
 
 
 class MainWindow(QMainWindow):
@@ -28,5 +29,5 @@ class MainWindow(QMainWindow):
         # 搜尋
         search_tab = QWidget(self)
         search_layout = QVBoxLayout(search_tab)
-        search_layout.addWidget(QLabel("搜尋（待實作）", search_tab))
+        search_layout.addWidget(SearchView(search_tab))
         self.tab_widget.addTab(search_tab, "搜尋")
