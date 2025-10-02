@@ -132,4 +132,17 @@ dist
 
 Entries.csv
 
-mingqing/
+# Desktop app (PyQt6) - local env, build outputs, runtime data
+desktop/.venv/
+desktop/venv/
+desktop/mingqing/
+desktop/build/
+desktop/dist/
+desktop/logs/
+desktop/data/database.db
+desktop/data/database.db-wal
+desktop/data/database.db-shm
+desktop/data/backups/
+desktop/data/exports/
+desktop/**/__pycache__/
+desktop/**/*.pyc
