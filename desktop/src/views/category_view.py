@@ -75,11 +75,13 @@ class CategoryView(QWidget):
         self._btn_add = QPushButton("新增", self)
         self._btn_edit = QPushButton("編輯", self)
         self._btn_delete = QPushButton("刪除", self)
+        self._btn_copy = QPushButton("複製", self)
 
         self._btn_refresh.clicked.connect(self.refresh)
         self._btn_add.clicked.connect(self.add_category)
         self._btn_edit.clicked.connect(self.edit_category)
         self._btn_delete.clicked.connect(self.delete_category)
+        self._btn_copy.clicked.connect(self.copy_category)
 
         btns = QHBoxLayout()
         btns.addWidget(self._btn_refresh)
@@ -87,6 +89,7 @@ class CategoryView(QWidget):
         btns.addWidget(self._btn_add)
         btns.addWidget(self._btn_edit)
         btns.addWidget(self._btn_delete)
+        btns.addWidget(self._btn_copy)
 
         layout = QVBoxLayout(self)
         layout.addLayout(btns)
@@ -167,5 +170,26 @@ class CategoryView(QWidget):
             self.refresh()
         except Exception as exc:
             QMessageBox.critical(self, "刪除失敗", f"無法刪除：{exc}")
+
+    def copy_category(self) -> None:
+        category_id = self._selected_id()
+        if category_id is None:
+            QMessageBox.information(self, "請選擇", "請先選擇一筆資料")
+            return
+        row = next((r for r in self._model._rows if r.get("id") == category_id), None)
+        current = "" if row is None else str(row.get("name", ""))
+        name, ok = QInputDialog.getText(self, "複製類別", "名稱：", text=current)
+        if not ok:
+            return
+        name = name.strip()
+        if not name:
+            QMessageBox.warning(self, "無效輸入", "名稱不得為空")
+            return
+        try:
+            with self._engine.begin() as conn:
+                conn.execute(text("INSERT INTO categories(name) VALUES (:name)"), {"name": name})
+            self.refresh()
+        except Exception as exc:
+            QMessageBox.critical(self, "複製失敗", f"無法新增：{exc}")
 
 

@@ -149,11 +149,13 @@ class BookView(QWidget):
         self._btn_add = QPushButton("新增", self)
         self._btn_edit = QPushButton("編輯", self)
         self._btn_delete = QPushButton("刪除", self)
+        self._btn_copy = QPushButton("複製", self)
 
         self._btn_reload.clicked.connect(self.reload)
         self._btn_add.clicked.connect(self.add_book)
         self._btn_edit.clicked.connect(self.edit_selected)
         self._btn_delete.clicked.connect(self.delete_selected)
+        self._btn_copy.clicked.connect(self.copy_selected)
 
         btns = QHBoxLayout()
         btns.addWidget(self._btn_reload)
@@ -161,6 +163,7 @@ class BookView(QWidget):
         btns.addWidget(self._btn_add)
         btns.addWidget(self._btn_edit)
         btns.addWidget(self._btn_delete)
+        btns.addWidget(self._btn_copy)
 
         layout = QVBoxLayout(self)
         layout.addLayout(btns)
@@ -250,5 +253,38 @@ class BookView(QWidget):
                 conn.execute(text(sql), {"id": data["id"]})
         except Exception as exc:
             QMessageBox.critical(self, "刪除失敗", f"無法刪除書籍：{exc}")
+            return
+        self.reload()
+
+    def copy_selected(self) -> None:
+        row = self._selected_row()
+        if row is None:
+            QMessageBox.information(self, "未選擇", "請先選擇一筆書籍。")
+            return
+        data = self._model.get_row(row)
+        init_values = {
+            "title": data.get("title", ""),
+            "author": data.get("author", ""),
+            "version": data.get("version", ""),
+            "source": data.get("source", ""),
+            "remarks": data.get("remarks", ""),
+            "category_id": data.get("category_id"),
+        }
+        dlg = _BookDialog(self._engine, self, init_values=init_values)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+        values = dlg.get_values()
+        if not all(values[k] for k in ("title", "author", "version", "source")):
+            QMessageBox.warning(self, "輸入不完整", "請填寫標題、作者、版本、來源。")
+            return
+        sql = (
+            "INSERT INTO books(title, author, version, source, category_id, remarks) "
+            "VALUES (:title, :author, :version, :source, :category_id, :remarks)"
+        )
+        try:
+            with self._engine.begin() as conn:
+                conn.execute(text(sql), values)
+        except Exception as exc:
+            QMessageBox.critical(self, "複製失敗", f"無法新增書籍：{exc}")
             return
         self.reload()

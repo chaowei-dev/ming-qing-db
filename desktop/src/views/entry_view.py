@@ -148,11 +148,13 @@ class EntryView(QWidget):
         self._btn_add = QPushButton("新增", self)
         self._btn_edit = QPushButton("編輯", self)
         self._btn_delete = QPushButton("刪除", self)
+        self._btn_copy = QPushButton("複製", self)
 
         self._btn_reload.clicked.connect(self.reload)
         self._btn_add.clicked.connect(self.add_entry)
         self._btn_edit.clicked.connect(self.edit_selected)
         self._btn_delete.clicked.connect(self.delete_selected)
+        self._btn_copy.clicked.connect(self.copy_selected)
 
         btns = QHBoxLayout()
         btns.addWidget(self._btn_reload)
@@ -160,6 +162,7 @@ class EntryView(QWidget):
         btns.addWidget(self._btn_add)
         btns.addWidget(self._btn_edit)
         btns.addWidget(self._btn_delete)
+        btns.addWidget(self._btn_copy)
 
         layout = QVBoxLayout(self)
         layout.addLayout(btns)
@@ -279,5 +282,37 @@ class EntryView(QWidget):
                 conn.execute(text("DELETE FROM entries WHERE id=:id"), {"id": data["id"]})
         except Exception as exc:
             QMessageBox.critical(self, "刪除失敗", f"無法刪除篇目：{exc}")
+            return
+        self.reload()
+
+    def copy_selected(self) -> None:
+        row_idx = self._selected_row()
+        if row_idx is None:
+            QMessageBox.information(self, "未選擇", "請先選擇一筆篇目。")
+            return
+        data = self._model.get_row(row_idx)
+        init_vals = {
+            "book_id": data["book_id"],
+            "roll": data["roll"],
+            "roll_name": data["roll_name"],
+            "entry_name": data["entry_name"],
+            "remarks": data.get("remarks", ""),
+        }
+        dlg = _EntryDialog(self._engine, self, init_values=init_vals)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+        values = dlg.get_values()
+        if not values["entry_name"]:
+            QMessageBox.warning(self, "輸入不完整", "請填寫篇目。")
+            return
+        try:
+            roll_id = self._ensure_roll(values["book_id"], values["roll"], values["roll_name"])
+            with self._engine.begin() as conn:
+                conn.execute(
+                    text("INSERT INTO entries(entry_name, roll_id, remarks) VALUES (:en, :rid, :rm)"),
+                    {"en": values["entry_name"], "rid": roll_id, "rm": values["remarks"]},
+                )
+        except Exception as exc:
+            QMessageBox.critical(self, "複製失敗", f"無法新增篇目：{exc}")
             return
         self.reload()
