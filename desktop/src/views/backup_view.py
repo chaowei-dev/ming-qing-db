@@ -17,6 +17,8 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QMessageBox,
     QFileDialog,
+    QProgressDialog,
+    QApplication,
 )
 
 from models.database import get_engine
@@ -76,12 +78,16 @@ class BackupView(QWidget):
         self._backups_dir.mkdir(parents=True, exist_ok=True)
 
         self._btn_create = QPushButton("建立備份", self)
+        self._btn_clear = QPushButton("清理目前資料庫", self)
         self._btn_restore = QPushButton("切換到選擇版本", self)
         self._btn_export = QPushButton("匯出選擇版本為 CSV", self)
+        self._btn_delete = QPushButton("刪除選擇版本", self)
 
         self._btn_create.clicked.connect(self.create_backup)
+        self._btn_clear.clicked.connect(self.clear_current_database)
         self._btn_restore.clicked.connect(self.restore_selected)
         self._btn_export.clicked.connect(self.export_selected_csv)
+        self._btn_delete.clicked.connect(self.delete_selected_backup)
 
         self._table = QTableView(self)
         self._model = _BackupsTableModel([])
@@ -99,8 +105,10 @@ class BackupView(QWidget):
 
         btns = QHBoxLayout()
         btns.addWidget(self._btn_create)
+        btns.addWidget(self._btn_clear)
         btns.addStretch(1)
         btns.addWidget(self._btn_restore)
+        btns.addWidget(self._btn_delete)
         btns.addWidget(self._btn_export)
 
         layout = QVBoxLayout(self)
@@ -142,6 +150,7 @@ class BackupView(QWidget):
         has_selection = self._selected_row() is not None
         self._btn_restore.setEnabled(has_selection)
         self._btn_export.setEnabled(has_selection)
+        self._btn_delete.setEnabled(has_selection)
 
     def _backup_filename(self) -> Path:
         ts = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -248,5 +257,117 @@ class BackupView(QWidget):
             QMessageBox.information(self, "匯出完成", f"已匯出 CSV：\n{out_path}")
         except Exception as exc:
             QMessageBox.critical(self, "匯出失敗", f"匯出 CSV 時發生錯誤：{exc}")
+
+
+    def clear_current_database(self) -> None:
+        if not self._db_path.exists():
+            QMessageBox.warning(self, "無資料庫", "找不到目前資料庫檔案，無法清理。")
+            return
+        if QMessageBox.question(
+            self,
+            "確認清理",
+            "將清空目前資料庫中的所有資料（書籍/卷/篇目/類別）。\n系統會先自動建立備份，是否繼續？",
+        ) != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            # 顯示等待視窗：備份階段
+            progress = QProgressDialog("正在備份目前資料庫...", "", 0, 0, self)
+            progress.setWindowTitle("請稍候")
+            progress.setWindowModality(Qt.WindowModality.ApplicationModal)
+            progress.setAutoClose(False)
+            progress.setAutoReset(False)
+            progress.show()
+            QApplication.processEvents()
+
+            # 先建立備份
+            backup_target = self._backup_filename()
+            src_conn = self._engine.raw_connection()
+            try:
+                dst_conn = sqlite3.connect(str(backup_target))
+                try:
+                    src_conn.backup(dst_conn)
+                    dst_conn.commit()
+                finally:
+                    dst_conn.close()
+            finally:
+                src_conn.close()
+            # 更新清單
+            self.reload()
+
+            # 進入清理階段
+            progress.setLabelText("正在清理資料庫...")
+            QApplication.processEvents()
+
+            # 依相依關係順序刪除資料，並重設自增序號
+            with self._engine.begin() as conn:
+                conn.exec_driver_sql("PRAGMA foreign_keys=ON;")
+                conn.exec_driver_sql("DELETE FROM entries;")
+                conn.exec_driver_sql("DELETE FROM rolls;")
+                conn.exec_driver_sql("DELETE FROM books;")
+                conn.exec_driver_sql("DELETE FROM categories;")
+                # reset autoincrement counters if present
+                try:
+                    conn.exec_driver_sql(
+                        "DELETE FROM sqlite_sequence WHERE name IN ('entries','rolls','books','categories');"
+                    )
+                except Exception:
+                    # sqlite_sequence might not exist; ignore
+                    pass
+
+            # 釋放連線後壓縮資料庫
+            self._engine.dispose()
+            try:
+                conn = sqlite3.connect(str(self._db_path))
+                try:
+                    conn.execute("VACUUM")
+                    conn.commit()
+                finally:
+                    conn.close()
+            except Exception:
+                # 如果 VACUUM 失敗，不影響資料清理結果
+                pass
+
+            progress.close()
+            QMessageBox.information(self, "已清理", "資料庫已清空，並已自動建立備份。")
+        except Exception as exc:
+            try:
+                progress.close()
+            except Exception:
+                pass
+            QMessageBox.critical(self, "清理失敗", f"清理資料庫時發生錯誤：{exc}")
+
+    def delete_selected_backup(self) -> None:
+        row_idx = self._selected_row()
+        if row_idx is None:
+            QMessageBox.information(self, "未選擇", "請先選擇一個備份版本。")
+            return
+        row = self._model.get_row(row_idx)
+        backup_path = Path(row.get("path", ""))
+        if not backup_path or not backup_path.exists():
+            QMessageBox.information(self, "檔案不存在", "找不到該備份檔案，清單將重新整理。")
+            self.reload()
+            return
+
+        # 第一次確認
+        if QMessageBox.question(
+            self,
+            "確認刪除",
+            f"確定要刪除此備份？\n\n{backup_path}",
+        ) != QMessageBox.StandardButton.Yes:
+            return
+        # 第二次確認（不可復原）
+        if QMessageBox.question(
+            self,
+            "再次確認",
+            "此操作無法復原，是否仍要刪除？",
+        ) != QMessageBox.StandardButton.Yes:
+            return
+
+        try:
+            backup_path.unlink()
+            self.reload()
+            QMessageBox.information(self, "已刪除", "選擇的備份已刪除。")
+        except Exception as exc:
+            QMessageBox.critical(self, "刪除失敗", f"刪除備份時發生錯誤：{exc}")
 
 

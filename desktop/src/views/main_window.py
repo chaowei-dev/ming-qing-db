@@ -50,12 +50,6 @@ class MainWindow(QMainWindow):
         entries_layout.addWidget(EntryView(entries_tab))
         self.tab_widget.addTab(entries_tab, "篇目")
 
-        # 匯入
-        import_tab = QWidget(self)
-        import_layout = QVBoxLayout(import_tab)
-        import_layout.addWidget(ImportView(import_tab))
-        self.tab_widget.addTab(import_tab, "匯入")
-
         # 備份（備份按鈕，資料庫版本切換／匯出.csv）
         backup_tab = QWidget(self)
         backup_layout = QVBoxLayout(backup_tab)
