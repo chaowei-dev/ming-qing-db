@@ -6,6 +6,7 @@ import csv
 import shutil
 import sqlite3
 from datetime import datetime
+import time
 
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant
 from PyQt6.QtWidgets import (
@@ -19,6 +20,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QProgressDialog,
     QApplication,
+    QInputDialog,
 )
 
 from models.database import get_engine
@@ -78,12 +80,14 @@ class BackupView(QWidget):
         self._backups_dir.mkdir(parents=True, exist_ok=True)
 
         self._btn_create = QPushButton("建立備份", self)
+        self._btn_import = QPushButton("匯入csv", self)
         self._btn_clear = QPushButton("清理目前資料庫", self)
         self._btn_restore = QPushButton("切換到選擇版本", self)
         self._btn_export = QPushButton("匯出選擇版本為 CSV", self)
         self._btn_delete = QPushButton("刪除選擇版本", self)
 
         self._btn_create.clicked.connect(self.create_backup)
+        self._btn_import.clicked.connect(self.import_csv)
         self._btn_clear.clicked.connect(self.clear_current_database)
         self._btn_restore.clicked.connect(self.restore_selected)
         self._btn_export.clicked.connect(self.export_selected_csv)
@@ -104,6 +108,7 @@ class BackupView(QWidget):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
 
         btns = QHBoxLayout()
+        btns.addWidget(self._btn_import)
         btns.addWidget(self._btn_create)
         btns.addWidget(self._btn_clear)
         btns.addStretch(1)
@@ -369,5 +374,230 @@ class BackupView(QWidget):
             QMessageBox.information(self, "已刪除", "選擇的備份已刪除。")
         except Exception as exc:
             QMessageBox.critical(self, "刪除失敗", f"刪除備份時發生錯誤：{exc}")
+
+    def import_csv(self) -> None:
+        # 先選擇匯入類別（必選）
+        selected_category_id: Optional[int] = None
+        try:
+            cats: List[Dict[str, Any]] = []
+            if self._db_path.exists():
+                conn = sqlite3.connect(str(self._db_path))
+                try:
+                    cur = conn.cursor()
+                    cur.execute("SELECT id, name FROM categories ORDER BY name")
+                    for cid, name in cur.fetchall():
+                        cats.append({"id": int(cid), "name": str(name)})
+                finally:
+                    conn.close()
+            if not cats:
+                QMessageBox.information(self, "尚無類別", "尚未建立任何類別，請先到『類別』分頁新增類別後再進行匯入。")
+                return
+
+            labels = [c["name"] for c in cats]
+            choice, ok = QInputDialog.getItem(
+                self,
+                "選擇類別",
+                "請選擇此次匯入的類別：",
+                labels,
+                0,
+                False,
+            )
+            if not ok:
+                return
+            for c in cats:
+                if c["name"] == choice:
+                    selected_category_id = int(c["id"])
+                    break
+            if selected_category_id is None:
+                QMessageBox.warning(self, "未選擇類別", "必須選擇一個類別才能進行匯入。")
+                return
+        except Exception as exc:
+            QMessageBox.critical(self, "讀取類別失敗", f"無法讀取類別清單：{exc}")
+            return
+
+        # 檔案選擇
+        csv_path_str, _ = QFileDialog.getOpenFileName(self, "選擇要匯入的 CSV", "", "CSV (*.csv)")
+        if not csv_path_str:
+            return
+        csv_path = Path(csv_path_str)
+        if not csv_path.exists():
+            QMessageBox.warning(self, "檔案不存在", "找不到所選 CSV 檔案。")
+            return
+
+        # 進度視窗
+        progress = QProgressDialog("正在匯入資料...", "取消", 0, 0, self)
+        progress.setWindowTitle("請稍候")
+        progress.setWindowModality(Qt.WindowModality.ApplicationModal)
+        progress.setAutoClose(False)
+        progress.setAutoReset(False)
+        progress.show()
+        QApplication.processEvents()
+
+        # 欄位名稱需與匯出一致
+        expected_headers = ["書名", "作者", "卷次", "卷名", "篇名", "版本", "備註"]
+
+        # 來源欄位在 CSV 中沒有，使用預設來源值（非 NULL）
+        default_source = ""
+
+        inserted_books = 0
+        inserted_rolls = 0
+        inserted_entries = 0
+
+        try:
+            # 使用 utf-8-sig 自動處理 BOM
+            with csv_path.open("r", encoding="utf-8-sig", newline="") as f:
+                reader = csv.reader(f)
+                try:
+                    headers = next(reader)
+                except StopIteration:
+                    QMessageBox.warning(self, "空檔案", "CSV 檔案為空。")
+                    progress.close()
+                    return
+
+                # 正規化欄位（去除空白與 BOM）
+                norm_headers = [h.replace("\ufeff", "").strip() for h in headers]
+                if norm_headers != expected_headers:
+                    progress.close()
+                    QMessageBox.critical(
+                        self,
+                        "欄位不符",
+                        "CSV 欄位必須為：\n" + ",".join(expected_headers),
+                    )
+                    return
+
+                conn = sqlite3.connect(str(self._db_path))
+                try:
+                    cur = conn.cursor()
+                    # 匯入優化 PRAGMAs（僅在本次連線有效）
+                    cur.execute("PRAGMA foreign_keys=ON;")
+                    cur.execute("PRAGMA busy_timeout=5000;")
+                    cur.execute("PRAGMA synchronous=OFF;")
+                    cur.execute("PRAGMA temp_store=MEMORY;")
+                    cur.execute("PRAGMA cache_size=-50000;")
+
+                    # 快取避免重複查詢
+                    book_cache: Dict[tuple, int] = {}
+                    roll_cache: Dict[tuple, int] = {}
+
+                    # 預先準備 statements
+                    select_book_sql = (
+                        "SELECT id, COALESCE(category_id, 0) FROM books WHERE title=? AND author=? AND version=? AND source=?"
+                    )
+                    insert_book_sql = (
+                        "INSERT OR IGNORE INTO books(title, author, version, source, category_id) VALUES (?,?,?,?,?)"
+                    )
+                    select_roll_sql = (
+                        "SELECT id FROM rolls WHERE book_id=? AND roll=? AND roll_name=?"
+                    )
+                    insert_roll_sql = (
+                        "INSERT OR IGNORE INTO rolls(roll, roll_name, book_id) VALUES (?,?,?)"
+                    )
+                    insert_entry_sql = (
+                        "INSERT OR IGNORE INTO entries(entry_name, roll_id, remarks) VALUES (?,?,?)"
+                    )
+
+                    batch_entries: List[tuple] = []
+                    batch_size = 5000
+                    processed = 0
+                    last_ui_update = time.time()
+
+                    conn.execute("BEGIN")
+                    for row in reader:
+                        if progress.wasCanceled():
+                            conn.rollback()
+                            progress.close()
+                            QMessageBox.information(self, "已取消", f"已取消匯入，已處理 {processed} 筆。")
+                            return
+
+                        if not row:
+                            continue
+                        try:
+                            title, author, roll, roll_name, entry_name, version, remarks = [
+                                (c.strip() if isinstance(c, str) else c) for c in row
+                            ]
+                        except ValueError:
+                            # 欄位數不正確，跳過此列
+                            continue
+
+                        # 取得或建立 book_id
+                        book_key = (title, author, version, default_source)
+                        book_id = book_cache.get(book_key)
+                        if book_id is None:
+                            cur.execute(select_book_sql, book_key)
+                            r = cur.fetchone()
+                            if r is None:
+                                cur.execute(
+                                    insert_book_sql,
+                                    (title, author, version, default_source, selected_category_id),
+                                )
+                                if cur.rowcount:
+                                    inserted_books += 1
+                                # 取得 id（不論是否新建）
+                                cur.execute(select_book_sql, book_key)
+                                r = cur.fetchone()
+                            book_id = int(r[0])
+                            # 如果已存在且尚未指定類別，而本次有選擇類別，補上類別
+                            if selected_category_id is not None and r is not None:
+                                existing_cat = int(r[1]) if r[1] is not None else 0
+                                if existing_cat == 0:
+                                    cur.execute(
+                                        "UPDATE books SET category_id = ? WHERE id = ?",
+                                        (selected_category_id, book_id),
+                                    )
+                            book_cache[book_key] = book_id
+
+                        # 取得或建立 roll_id
+                        roll_key = (book_id, roll, roll_name)
+                        roll_id = roll_cache.get(roll_key)
+                        if roll_id is None:
+                            cur.execute(select_roll_sql, roll_key)
+                            r = cur.fetchone()
+                            if r is None:
+                                cur.execute(insert_roll_sql, (roll, roll_name, book_id))
+                                if cur.rowcount:
+                                    inserted_rolls += 1
+                                cur.execute(select_roll_sql, roll_key)
+                                r = cur.fetchone()
+                            roll_id = int(r[0])
+                            roll_cache[roll_key] = roll_id
+
+                        # 準備 entries 批次
+                        entry_tuple = (entry_name, roll_id, remarks or None)
+                        batch_entries.append(entry_tuple)
+                        processed += 1
+
+                        if len(batch_entries) >= batch_size:
+                            cur.executemany(insert_entry_sql, batch_entries)
+                            inserted_entries += cur.rowcount if cur.rowcount is not None else 0
+                            batch_entries.clear()
+
+                            # UI 更新（節流）
+                            now = time.time()
+                            if now - last_ui_update > 0.25:
+                                progress.setLabelText(f"正在匯入資料... 已處理 {processed} 筆")
+                                QApplication.processEvents()
+                                last_ui_update = now
+
+                    # flush 殘餘批次
+                    if batch_entries:
+                        cur.executemany(insert_entry_sql, batch_entries)
+                        inserted_entries += cur.rowcount if cur.rowcount is not None else 0
+
+                    conn.commit()
+                finally:
+                    conn.close()
+
+            progress.close()
+            QMessageBox.information(
+                self,
+                "匯入完成",
+                f"書籍新增 {inserted_books}，卷新增 {inserted_rolls}，篇目新增 {inserted_entries}。",
+            )
+        except Exception as exc:
+            try:
+                progress.close()
+            except Exception:
+                pass
+            QMessageBox.critical(self, "匯入失敗", f"匯入 CSV 時發生錯誤：{exc}")
 
 

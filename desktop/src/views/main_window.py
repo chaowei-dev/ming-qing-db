@@ -4,7 +4,6 @@ from .search_books_view import SearchBookView
 from .category_view import CategoryView
 from .book_view import BookView
 from .entry_view import EntryView
-from .import_view import ImportView
 from .backup_view import BackupView
 
 
