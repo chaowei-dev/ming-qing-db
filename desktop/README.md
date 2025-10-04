@@ -323,16 +323,23 @@ python -m pytest --cov=src tests/
 #### 打包發布
 
 ```bash
-# 1. 更新版本號
-# 2. 運行測試
-python -m pytest tests/
+# macOS（產生 .app 與可分發目錄）
+./package-mac.sh
 
-# 3. 打包應用程式
-pyinstaller build_app.spec
-
-# 4. 測試打包後的應用程式
-# 5. 發布新版本
+# Windows（PowerShell）
+pwsh -File ./package-win.ps1
 ```
+
+打包輸出目錄：`desktop/dist/MingQingDB/`
+
+說明：
+
+- 已內嵌 `resources/`（樣式與初始化 SQL）。
+- 執行期資料放置於使用者資料目錄：
+  - macOS: `~/Library/Application Support/MingQingDB`
+  - Windows: `%LOCALAPPDATA%\MingQingDB`
+  - Linux: `~/.local/share/MingQingDB`
+- 首次啟動會自動於上述資料目錄建立 `database.db` 與 `backups/`。
 
 ### 8. 資料遷移
 

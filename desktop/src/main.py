@@ -5,11 +5,11 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
 from views.main_window import MainWindow
 from utils.bootstrap import initialize_database_if_needed
+from utils.paths import get_resource_path
 
 
 def _load_qss_if_exists(app: QApplication) -> None:
-    root_dir = Path(__file__).resolve().parent.parent
-    qss_path = root_dir / "resources" / "styles" / "main.qss"
+    qss_path = get_resource_path("styles", "main.qss")
     if qss_path.is_file():
         try:
             app.setStyleSheet(qss_path.read_text(encoding="utf-8"))

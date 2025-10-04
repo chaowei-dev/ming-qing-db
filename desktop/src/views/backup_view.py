@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
 )
 
 from models.database import get_engine
+from utils.paths import get_database_path, get_backups_dir
 
 
 class _BackupsTableModel(QAbstractTableModel):
@@ -73,11 +74,8 @@ class BackupView(QWidget):
         super().__init__(parent)
 
         self._engine = get_engine()
-        self._root_dir = Path(__file__).resolve().parent.parent.parent
-        self._data_dir = self._root_dir / "data"
-        self._db_path = self._data_dir / "database.db"
-        self._backups_dir = self._data_dir / "backups"
-        self._backups_dir.mkdir(parents=True, exist_ok=True)
+        self._db_path = get_database_path()
+        self._backups_dir = get_backups_dir()
 
         self._btn_create = QPushButton("建立備份", self)
         self._btn_import = QPushButton("匯入csv", self)

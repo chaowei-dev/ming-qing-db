@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
+from utils.paths import get_database_path
 
 
 _engine: Engine = create_engine(
-    "sqlite:///data/database.db",
+    f"sqlite:///{get_database_path()}",
     future=True,
     pool_pre_ping=True,
     connect_args={"timeout": 5},  # busy_timeout is also set via PRAGMA
