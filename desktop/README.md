@@ -5,10 +5,12 @@
 ### 1. 開發環境設置
 
 #### 系統要求
+
 - Python 3.10+
 - Windows / macOS / Linux
 
 #### 所需安裝套件
+
 ```bash
 # 推薦：使用 requirements.txt（僅最小依賴）
 pip install -r requirements.txt
@@ -41,7 +43,8 @@ desktop/
 │   │   ├── main_window.py         # 主視窗（書籍／篇目／搜尋）
 │   │   ├── book_view.py           # 書籍管理視圖
 │   │   ├── entry_view.py          # 篇目管理視圖
-│   │   └── search_view.py         # 搜尋視圖
+│   │   ├── search_entries_view.py # 搜尋篇目視圖
+│   │   └── search_books_view.py   # 搜尋書籍視圖
 │   │
 │   ├── controllers/       # 控制器層（可與 views 合併）
 │   │   ├── __init__.py
@@ -85,6 +88,7 @@ desktop/
 ### 3. 資料庫設計
 
 #### 3.1 資料表結構
+
 ```sql
 -- 類別表（對應 Prisma: Category）
 CREATE TABLE categories (
@@ -143,10 +147,10 @@ CREATE INDEX idx_entries_roll_id ON entries(roll_id);
 ```
 
 #### 3.2 設計備註
+
 - 單機單人，不含認證／權限。
 - 採底線命名（如 `created_at`）。
 - 僅保留必要索引與唯一鍵，避免過度設計。
- 
 
 #### 3.3 資料完整性
 
@@ -192,11 +196,13 @@ def set_sqlite_pragmas(dbapi_conn, _):
 ```
 
 #### 3.4 全文搜尋
+
 - 需要全文檢索時，可採用 SQLite FTS5 以虛表儲存可搜尋內容，並以觸發器同步正表與 FTS 表。
 
 ### 4. UI 設計概要
 
 #### 主視窗設計
+
 - **頂部選單欄**：檔案、編輯、檢視、工具、幫助
 - **左側導航欄**：儀表板、類別管理、書籍管理、篇目管理、搜尋、設定
 - **主內容區**：動態切換不同功能視圖
@@ -221,31 +227,37 @@ def set_sqlite_pragmas(dbapi_conn, _):
 ### 5. 核心功能
 
 #### 資料管理
+
 - ✅ 書籍管理（新增／編輯／刪除／搜尋）
 - ✅ 卷管理（新增／編輯／刪除）
 - ✅ 篇目管理（新增／編輯／刪除／搜尋）
 
 #### 搜尋功能
+
 - ✅ 多欄位關鍵字 OR 搜尋（title/author/roll/entry）
 - ✅ 搜尋結果匯出 CSV
- - FTS5、搜尋歷史、排序篩選可於需要時加入
+- FTS5、搜尋歷史、排序篩選可於需要時加入
 
 #### 資料匯入匯出
+
 - ✅ CSV 匯入／匯出（UTF-8）
- - Excel 匯入／匯出可於需要時安裝後使用
- - 大量批次處理、錯誤報表可於需要時加入
+- Excel 匯入／匯出可於需要時安裝後使用
+- 大量批次處理、錯誤報表可於需要時加入
 
 #### 備份還原
+
 - ✅ 一鍵備份（複製檔案）與手動還原
- - 備份排程與備份管理 UI 可於需要時加入
+- 備份排程與備份管理 UI 可於需要時加入
 
 #### 系統功能
+
 - ✅ 基本日誌與錯誤處理
- - 設定頁、資料庫遷移工具可於需要時加入
+- 設定頁、資料庫遷移工具可於需要時加入
 
 ### 6. 安裝與使用說明
 
 #### 開發環境安裝
+
 ```bash
 # 1. 克隆專案
 git clone [repository-url]
@@ -263,12 +275,14 @@ python src/main.py
 ```
 
 #### 使用者安裝
+
 1. 下載最新版本安裝包
 2. 運行安裝程式
 3. 按照安裝嚮導完成安裝
 4. 首次運行時會自動創建資料庫和必要目錄
 
 #### 基本使用流程
+
 1. 啟動程式後，首先在「類別管理」中建立文獻類別
 2. 在「書籍管理」中新增書籍資料
 3. 在「篇目管理」中新增篇目資料
@@ -278,6 +292,7 @@ python src/main.py
 ### 7. 開發指南
 
 #### 開發流程
+
 1. 克隆專案到本地
 2. 設置開發環境
 3. 運行 `python src/main.py` 開始開發
@@ -286,12 +301,14 @@ python src/main.py
 6. 使用 PyInstaller 打包應用程式
 
 #### 代碼規範
+
 - 使用 Python 類型提示
 - 遵循 PEP 8 代碼風格
 - 編寫單元測試
 - 添加適當的註釋和文檔
 
 #### 測試
+
 ```bash
 # 運行所有測試
 python -m pytest tests/
@@ -304,6 +321,7 @@ python -m pytest --cov=src tests/
 ```
 
 #### 打包發布
+
 ```bash
 # 1. 更新版本號
 # 2. 運行測試
@@ -319,23 +337,29 @@ pyinstaller build_app.spec
 ### 8. 資料遷移
 
 #### 從網頁版遷移資料
+
 1. 從網頁版匯出 CSV 格式資料
 2. 使用本程式的匯入功能
 3. 或使用資料庫遷移工具直接轉換
 
 #### 資料庫升級
+
 - 不提供自動遷移；若未來調整結構，請先備份後再重建
 
 #### 大量匯入策略（需要時再採用）
+
 - 目標：在單機 SQLite 上以「可靠、可回復」方式大量匯入，不阻塞 UI、可觀測進度、資料不重複。
 - 前提：CSV 欄位順序與 Web 版一致（title, author, roll, rollName, entry, version, source, remarks）。
 
 流程（建議採「分批＋暫存表＋集合式 SQL」）
-1) 分批讀取與交易
+
+1. 分批讀取與交易
+
    - 以 10,000 筆為一批（可調 5k–20k），每批使用單一交易提交。
    - 以背景執行緒處理，回報進度（行數與批次），可取消。
 
-2) 暫存表 staging（每批建立/清空）
+2. 暫存表 staging（每批建立/清空）
+
 ```sql
 -- 暫存匯入資料（每批重建或 TRUNCATE 等效）
 DROP TABLE IF EXISTS staging_entries;
@@ -351,12 +375,14 @@ CREATE TABLE staging_entries (
 );
 ```
 
-3) 批次寫入 staging（Python executemany 或 pandas.to_sql(chunksize)）
+3. 批次寫入 staging（Python executemany 或 pandas.to_sql(chunksize)）
+
 ```python
 # 以 executemany 寫入 staging_entries（略）
 ```
 
-4) 集合式匯入（依唯一鍵去重，具冪等性）
+4. 集合式匯入（依唯一鍵去重，具冪等性）
+
 ```sql
 -- 4.1 補齊缺少的書籍（以唯一鍵定義一本書）
 INSERT OR IGNORE INTO books(title, author, version, source, category_id, remarks)
@@ -380,12 +406,14 @@ ON CONFLICT(roll_id, entry_name) DO UPDATE SET
 ```
 
 特性與說明
+
 - 冪等：依賴唯一索引（見 3.3）。books/rolls 採 `INSERT OR IGNORE` 去重；entries 採 UPSERT，僅當來源 `remarks` 非空時覆蓋原值（透過 `COALESCE(excluded.remarks, entries.remarks)`）。
 - 原子性：每批以單一交易提交；失敗可回滾到批次起點。
 - 效能：集合式 SQL 大幅減少往返與逐列查詢；staging 可讓 SQLite 以索引有效合併。
 - 驗證：匯入前可在應用層驗證欄位空值/長度/非法字元；錯誤列輸出到報表（CSV/Excel）不影響主流程。
 
 可考慮的優化（僅在需要時啟用）
+
 - 暫時關閉非唯一索引（如 `idx_books_title_author`、`idx_rolls_book_id`、`idx_entries_roll_id`）於大量匯入前，匯入完畢再重建；唯一索引需保留以確保冪等。
 - 匯入會話期間可調整 PRAGMA（僅針對此匯入連線）：
   - `PRAGMA busy_timeout=5000;`（避免短暫鎖直接失敗）
@@ -395,35 +423,42 @@ ON CONFLICT(roll_id, entry_name) DO UPDATE SET
   - 完成後恢復預設；`foreign_keys=ON` 請保持不變。
 
 收尾步驟（必做）
+
 - 若匯入前有停用非唯一索引，請先重建（與表結構一致）。
 - 執行 `ANALYZE;` 以更新統計資訊，優化查詢計劃。
 - 執行 `PRAGMA wal_checkpoint(TRUNCATE);` 釋放 WAL 檔案空間。
 
 恢復與續傳
+
 - 任何批次失敗都不影響先前批次；修正來源檔或清理 staging 後可從失敗批次重新開始。
 - 因為採用 `INSERT OR IGNORE` 與唯一鍵，重覆執行批次不會產生重複資料。
 
 FTS（若啟用）
+
 - 建議在全部匯入完成後再重建 FTS 索引或觸發重建，避免匯入期間頻繁維護造成額外成本。
 
 ### 9. 常見問題
 
 #### 資料庫相關
+
 - **資料庫文件位置**：`data/database.db`
 - **備份文件位置**：`data/backups/`
 - **日誌文件位置**：`logs/app.log`
 
 #### 匯入匯出
+
 - **支援的格式**：CSV、Excel (.xlsx)
 - **檔案編碼**：UTF-8
 - **欄位對應**：與網頁版完全兼容
 
 #### 性能優化
+
 - 使用索引優化搜尋性能
 - 支援大量資料的批量處理
 - 記憶體使用優化
 
 #### 故障排除
+
 - 檢查日誌文件 `logs/app.log`
 - 確認資料庫文件權限
 - 重新初始化資料庫（會清空資料）
@@ -431,11 +466,13 @@ FTS（若啟用）
 ### 10. 版本歷史
 
 #### v0.1.0（規劃）
+
 - 書籍／卷／篇目 CRUD
 - 關鍵字搜尋與 CSV 匯出
 - CSV 匯入（遇重複跳過）
 
 #### 未來計劃
+
 - Excel 匯入／匯出
 - 進階搜尋（排序、篩選、FTS5）
 - 類別管理與設定頁
@@ -446,10 +483,11 @@ FTS（若啟用）
 （桌面端採本地 SQLite，不呼叫 Web API；此段僅為與網頁版語意對齊的參考，可略讀。）
 
 #### 桌面端（PyQt6）實作清單
+
 - 書籍管理：列表／搜尋（title/author）／新增／編輯／刪除
 - 篇目管理：列表／搜尋（roll/entry）／新增／編輯／刪除
 - 匯入匯出：CSV 匯入（欄位：title, author, roll, rollName, entry, version, source, remarks）；CSV 匯出
 - 備份：一鍵備份與手動還原
- - 類別管理、設定頁、進階搜尋、Excel、FTS5 可於需要時加入
+- 類別管理、設定頁、進階搜尋、Excel、FTS5 可於需要時加入
 
 以上清單可作為開發勾選表，逐項完成後即可達到與現有前後端一致的資料與功能語意。

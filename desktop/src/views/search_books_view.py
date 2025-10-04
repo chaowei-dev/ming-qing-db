@@ -8,11 +8,11 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QTableView,
-    QLineEdit,
     QPushButton,
-    QLabel,
     QMessageBox,
+    QLineEdit,
     QComboBox,
+    QLabel,
     QSizePolicy,
     QCheckBox,
     QHeaderView,
@@ -22,17 +22,15 @@ from models.database import get_engine
 from sqlalchemy import text
 
 
-class _SearchResultModel(QAbstractTableModel):
+class _BookSearchResultModel(QAbstractTableModel):
     def __init__(self, rows: List[Dict[str, Any]]):
         super().__init__()
         self._rows = rows
         self._headers = [
-            # ("id", "編號"),
-            ("entry_name", "篇目"),
-            ("book_title", "書名"),
-            ("book_author", "作者"),
-            ("roll", "卷"),
-            ("roll_name", "卷名"),
+            ("title", "書名"),
+            ("author", "作者"),
+            ("version", "版本"),
+            ("source", "來源"),
             ("category_name", "類別"),
             ("remarks", "備註"),
         ]
@@ -64,7 +62,7 @@ class _SearchResultModel(QAbstractTableModel):
         self.endResetModel()
 
 
-class SearchView(QWidget):
+class SearchBookView(QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self._engine = get_engine()
@@ -72,8 +70,8 @@ class SearchView(QWidget):
         # Filters
         self._title_in = QLineEdit(self)
         self._author_in = QLineEdit(self)
-        self._roll_in = QLineEdit(self)
-        self._entry_in = QLineEdit(self)
+        self._version_in = QLineEdit(self)
+        self._source_in = QLineEdit(self)
         self._category_cb = QComboBox(self)
         self._keyword_in = QLineEdit(self)
         self._keyword_toggle = QCheckBox(self)
@@ -91,8 +89,8 @@ class SearchView(QWidget):
         # Default placeholders
         self._title_in.setPlaceholderText("輸入書名")
         self._author_in.setPlaceholderText("輸入作者")
-        self._roll_in.setPlaceholderText("輸入卷或卷名")
-        self._entry_in.setPlaceholderText("輸入篇目")
+        self._version_in.setPlaceholderText("輸入版本")
+        self._source_in.setPlaceholderText("輸入來源")
         self._keyword_in.setPlaceholderText("輸入全域搜尋關鍵字")
 
         self._load_categories()
@@ -102,7 +100,7 @@ class SearchView(QWidget):
         input_width = 320
         combo_width = input_width
         keyword_width = input_width
-        mid_gap = 24  # extra horizontal space between left and right groups
+        mid_gap = 24
 
         lbl_cat = QLabel("類別")
         lbl_cat.setFixedWidth(label_width)
@@ -120,13 +118,13 @@ class SearchView(QWidget):
         lbl_author.setFixedWidth(label_width)
         self._author_in.setFixedWidth(input_width)
 
-        lbl_roll = QLabel("卷")
-        lbl_roll.setFixedWidth(label_width)
-        self._roll_in.setFixedWidth(input_width)
+        lbl_version = QLabel("版本")
+        lbl_version.setFixedWidth(label_width)
+        self._version_in.setFixedWidth(input_width)
 
-        lbl_entry = QLabel("篇目")
-        lbl_entry.setFixedWidth(label_width)
-        self._entry_in.setFixedWidth(input_width)
+        lbl_source = QLabel("來源")
+        lbl_source.setFixedWidth(label_width)
+        self._source_in.setFixedWidth(input_width)
 
         row1 = QHBoxLayout()
         row1.addWidget(lbl_cat)
@@ -146,11 +144,11 @@ class SearchView(QWidget):
         row2.addStretch(1)
 
         row3 = QHBoxLayout()
-        row3.addWidget(lbl_roll)
-        row3.addWidget(self._roll_in)
+        row3.addWidget(lbl_version)
+        row3.addWidget(self._version_in)
         row3.addSpacing(mid_gap)
-        row3.addWidget(lbl_entry)
-        row3.addWidget(self._entry_in)
+        row3.addWidget(lbl_source)
+        row3.addWidget(self._source_in)
         row3.addStretch(1)
 
         row4 = QHBoxLayout()
@@ -158,11 +156,10 @@ class SearchView(QWidget):
 
         # Results
         self._table = QTableView(self)
-        self._model = _SearchResultModel([])
+        self._model = _BookSearchResultModel([])
         self._table.setModel(self._model)
         header = self._table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-        # Make 篇目(0) 和 書名(1) take most remaining width
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
 
@@ -173,59 +170,8 @@ class SearchView(QWidget):
         layout.addLayout(row4)
         layout.addWidget(self._table)
 
-        # default: 關鍵字模式關閉（只用單項欄位），故停用關鍵字輸入
         self._keyword_toggle.setChecked(False)
         self._on_keyword_toggle(False)
-
-    def _query_results(self, title: str, author: str, roll: str, entry: str, keyword: str) -> List[Dict[str, Any]]:
-        # Text filters combined by OR; category filter (if any) combined by AND
-        text_where: List[str] = []
-        params: Dict[str, Any] = {}
-        if title:
-            text_where.append("b.title LIKE :title")
-            params["title"] = f"%{title}%"
-        if author:
-            text_where.append("b.author LIKE :author")
-            params["author"] = f"%{author}%"
-        if roll:
-            text_where.append("r.roll LIKE :roll OR r.roll_name LIKE :roll")
-            params["roll"] = f"%{roll}%"
-        if entry:
-            text_where.append("e.entry_name LIKE :entry")
-            params["entry"] = f"%{entry}%"
-
-        where_parts: List[str] = []
-        if text_where:
-            where_parts.append("(" + " OR ".join(text_where) + ")")
-
-        # Global keyword OR across book/roll/entry fields
-        if keyword:
-            where_parts.append(
-                "(b.title LIKE :kw OR b.author LIKE :kw OR r.roll LIKE :kw OR r.roll_name LIKE :kw OR e.entry_name LIKE :kw OR e.remarks LIKE :kw)"
-            )
-            params["kw"] = f"%{keyword}%"
-
-        cat_id = self._category_cb.currentData()
-        if cat_id is not None:
-            where_parts.append("b.category_id = :cat_id")
-            params["cat_id"] = int(cat_id)
-
-        clauses = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
-        sql = (
-            "SELECT e.id AS id, e.entry_name, "
-            "b.title AS book_title, b.author AS book_author, "
-            "r.roll, r.roll_name, "
-            "COALESCE(c.name, '') AS category_name, "
-            "COALESCE(e.remarks, '') AS remarks "
-            "FROM entries e "
-            "JOIN rolls r ON e.roll_id = r.id "
-            "JOIN books b ON r.book_id = b.id "
-            "LEFT JOIN categories c ON b.category_id = c.id" + clauses + " "
-            "ORDER BY b.title, r.roll LIMIT 1000"
-        )
-        with self._engine.connect() as conn:
-            rows = [dict(r._mapping) for r in conn.execute(text(sql), params)]  # type: ignore[attr-defined]
-        return rows
 
     def _load_categories(self) -> None:
         self._category_cb.clear()
@@ -236,38 +182,80 @@ class SearchView(QWidget):
                 d = dict(r._mapping)  # type: ignore[attr-defined]
                 self._category_cb.addItem(d["name"], d["id"])
 
+    def _query_results(self, title: str, author: str, version: str, source: str, keyword: str) -> List[Dict[str, Any]]:
+        text_where: List[str] = []
+        params: Dict[str, Any] = {}
+        if title:
+            text_where.append("b.title LIKE :title")
+            params["title"] = f"%{title}%"
+        if author:
+            text_where.append("b.author LIKE :author")
+            params["author"] = f"%{author}%"
+        if version:
+            text_where.append("b.version LIKE :version")
+            params["version"] = f"%{version}%"
+        if source:
+            text_where.append("b.source LIKE :source")
+            params["source"] = f"%{source}%"
+
+        where_parts: List[str] = []
+        if text_where:
+            where_parts.append("(" + " OR ".join(text_where) + ")")
+
+        if keyword:
+            where_parts.append(
+                "(b.title LIKE :kw OR b.author LIKE :kw OR b.version LIKE :kw OR b.source LIKE :kw)"
+            )
+            params["kw"] = f"%{keyword}%"
+
+        cat_id = self._category_cb.currentData()
+        if cat_id is not None:
+            where_parts.append("b.category_id = :cat_id")
+            params["cat_id"] = int(cat_id)
+
+        clauses = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
+        sql = (
+            "SELECT b.title, b.author, b.version, b.source, "
+            "COALESCE(c.name, '') AS category_name, "
+            "COALESCE(b.remarks, '') AS remarks "
+            "FROM books b LEFT JOIN categories c ON b.category_id = c.id" + clauses + " "
+            "ORDER BY b.title, b.author, b.version, b.source LIMIT 1000"
+        )
+        with self._engine.connect() as conn:
+            rows = [dict(r._mapping) for r in conn.execute(text(sql), params)]  # type: ignore[attr-defined]
+        return rows
+
     def _on_keyword_toggle(self, enabled: bool) -> None:
-        # 關鍵字模式：僅允許輸入關鍵字，其餘文字欄位停用；類別仍可使用
         self._keyword_in.setEnabled(enabled)
         self._title_in.setEnabled(not enabled)
         self._author_in.setEnabled(not enabled)
-        self._roll_in.setEnabled(not enabled)
-        self._entry_in.setEnabled(not enabled)
+        self._version_in.setEnabled(not enabled)
+        self._source_in.setEnabled(not enabled)
 
-        # Update placeholders so the state is obvious at a glance
         if enabled:
             self._keyword_in.setPlaceholderText("輸入全域搜尋關鍵字")
             self._title_in.setPlaceholderText("全域搜尋中停用")
             self._author_in.setPlaceholderText("全域搜尋中停用")
-            self._roll_in.setPlaceholderText("全域搜尋中停用")
-            self._entry_in.setPlaceholderText("全域搜尋式中停用")
+            self._version_in.setPlaceholderText("全域搜尋中停用")
+            self._source_in.setPlaceholderText("全域搜尋中停用")
         else:
             self._keyword_in.setPlaceholderText("勾選全域搜尋以啟用")
             self._title_in.setPlaceholderText("輸入書名")
             self._author_in.setPlaceholderText("輸入作者")
-            self._roll_in.setPlaceholderText("輸入卷或卷名")
-            self._entry_in.setPlaceholderText("輸入篇目")
+            self._version_in.setPlaceholderText("輸入版本")
+            self._source_in.setPlaceholderText("輸入來源")
 
     def search(self) -> None:
         try:
-            # 僅使用啟用中的輸入值
             title = self._title_in.text().strip() if self._title_in.isEnabled() else ""
             author = self._author_in.text().strip() if self._author_in.isEnabled() else ""
-            roll = self._roll_in.text().strip() if self._roll_in.isEnabled() else ""
-            entry = self._entry_in.text().strip() if self._entry_in.isEnabled() else ""
+            version = self._version_in.text().strip() if self._version_in.isEnabled() else ""
+            source = self._source_in.text().strip() if self._source_in.isEnabled() else ""
             keyword = self._keyword_in.text().strip() if self._keyword_in.isEnabled() else ""
 
-            rows = self._query_results(title, author, roll, entry, keyword)
+            rows = self._query_results(title, author, version, source, keyword)
             self._model.update_rows(rows)
         except Exception as exc:
             QMessageBox.critical(self, "搜尋失敗", f"無法搜尋：{exc}")
+
+
