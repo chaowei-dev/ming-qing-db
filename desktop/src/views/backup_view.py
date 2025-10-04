@@ -106,6 +106,8 @@ class BackupView(QWidget):
         header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        # Hide 路徑 column; keep data for actions
+        self._table.setColumnHidden(3, True)
 
         btns = QHBoxLayout()
         btns.addWidget(self._btn_import)
@@ -147,6 +149,8 @@ class BackupView(QWidget):
             # Auto-select the first row if available so actions are ready
             if rows:
                 self._table.selectRow(0)
+            # Ensure 路徑 column remains hidden after model updates
+            self._table.setColumnHidden(3, True)
             self._update_buttons()
         except Exception as exc:
             QMessageBox.critical(self, "讀取失敗", f"讀取備份清單時發生錯誤：{exc}")
@@ -157,8 +161,26 @@ class BackupView(QWidget):
         self._btn_export.setEnabled(has_selection)
         self._btn_delete.setEnabled(has_selection)
 
-    def _backup_filename(self) -> Path:
+    def _sanitize_remark(self, remark: str) -> str:
+        # Sanitize remark for filesystem-safe filename suffix
+        import re
+        remark = (remark or "").strip()
+        if not remark:
+            return ""
+        # Replace path separators and reserved characters
+        for ch in ["/", "\\", ":", "*", "?", '"', "<", ">", "|"]:
+            remark = remark.replace(ch, "_")
+        # Allow word chars, dash, dot, underscore, and CJK; replace others with underscore
+        remark = re.sub(r"[^\w\-.\u4e00-\u9fff]+", "_", remark)
+        # Collapse repeats and trim
+        remark = re.sub(r"_+", "_", remark).strip("._-")
+        return remark
+
+    def _backup_filename(self, remark: Optional[str] = None) -> Path:
         ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        safe = self._sanitize_remark(remark or "")
+        if safe:
+            return self._backups_dir / f"backup-{ts}-{safe}.db"
         return self._backups_dir / f"backup-{ts}.db"
 
     def create_backup(self) -> None:
@@ -167,7 +189,11 @@ class BackupView(QWidget):
                 QMessageBox.warning(self, "無資料庫", "找不到目前資料庫檔案，無法建立備份。")
                 return
 
-            target = self._backup_filename()
+            # Ask for optional remark to append in filename
+            remark, ok = QInputDialog.getText(self, "備份備註", "可輸入備註（將加在檔名最後，可留空）：")
+            if not ok:
+                return
+            target = self._backup_filename(str(remark))
             # 使用 SQLite 線上備份 API 以取得一致快照（WAL 模式安全）
             src_conn = self._engine.raw_connection()
             try:
