@@ -5,6 +5,7 @@ from .category_view import CategoryView
 from .book_view import BookView
 from .entry_view import EntryView
 from .import_view import ImportView
+from .backup_view import BackupView
 
 
 class MainWindow(QMainWindow):
@@ -54,3 +55,9 @@ class MainWindow(QMainWindow):
         import_layout = QVBoxLayout(import_tab)
         import_layout.addWidget(ImportView(import_tab))
         self.tab_widget.addTab(import_tab, "匯入")
+
+        # 備份（備份按鈕，資料庫版本切換／匯出.csv）
+        backup_tab = QWidget(self)
+        backup_layout = QVBoxLayout(backup_tab)
+        backup_layout.addWidget(BackupView(backup_tab))
+        self.tab_widget.addTab(backup_tab, "資料庫管理")
