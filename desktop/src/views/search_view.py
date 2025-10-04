@@ -81,7 +81,19 @@ class SearchView(QWidget):
         self._search_btn.clicked.connect(self.search)
         self._search_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self._keyword_toggle.toggled.connect(self._on_keyword_toggle)
-        self._keyword_toggle.setToolTip("使用關鍵字模式")
+        self._keyword_toggle.setToolTip("使用全域搜尋模式")
+
+        # Make disabled inputs visually obvious
+        self.setStyleSheet(
+            "QLineEdit:disabled { background-color: #f2f2f2; color: #888888; }"
+        )
+
+        # Default placeholders
+        self._title_in.setPlaceholderText("輸入書名")
+        self._author_in.setPlaceholderText("輸入作者")
+        self._roll_in.setPlaceholderText("輸入卷或卷名")
+        self._entry_in.setPlaceholderText("輸入篇目")
+        self._keyword_in.setPlaceholderText("輸入全域搜尋關鍵字")
 
         self._load_categories()
 
@@ -231,6 +243,20 @@ class SearchView(QWidget):
         self._author_in.setEnabled(not enabled)
         self._roll_in.setEnabled(not enabled)
         self._entry_in.setEnabled(not enabled)
+
+        # Update placeholders so the state is obvious at a glance
+        if enabled:
+            self._keyword_in.setPlaceholderText("輸入全域搜尋關鍵字")
+            self._title_in.setPlaceholderText("全域搜尋中停用")
+            self._author_in.setPlaceholderText("全域搜尋中停用")
+            self._roll_in.setPlaceholderText("全域搜尋中停用")
+            self._entry_in.setPlaceholderText("全域搜尋式中停用")
+        else:
+            self._keyword_in.setPlaceholderText("勾選全域搜尋以啟用")
+            self._title_in.setPlaceholderText("輸入書名")
+            self._author_in.setPlaceholderText("輸入作者")
+            self._roll_in.setPlaceholderText("輸入卷或卷名")
+            self._entry_in.setPlaceholderText("輸入篇目")
 
     def search(self) -> None:
         try:
