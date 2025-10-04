@@ -1,0 +1,120 @@
+name: Build Desktop Apps
+
+on:
+  push:
+    branches: [ main, pyqt ]
+    tags: [ 'v*', 'v*.*.*' ]
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/desktop-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-13, windows-latest, ubuntu-22.04]
+        python-version: ['3.12']
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        working-directory: desktop
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build with PyInstaller
+        working-directory: desktop
+        run: |
+          pyinstaller build_app.spec
+
+      - name: Archive artifacts (macOS)
+        if: startsWith(matrix.os, 'macos')
+        working-directory: desktop/dist
+        run: |
+          tar -czf MingQingDB-macos.tar.gz MingQingDB.app
+
+      - name: Archive artifacts (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          powershell -Command "Compress-Archive -Path 'desktop\\dist\\MingQingDB' -DestinationPath 'desktop\\dist\\MingQingDB-windows.zip' -Force"
+
+      - name: Archive artifacts (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        working-directory: desktop/dist
+        run: |
+          tar -czf MingQingDB-linux.tar.gz MingQingDB
+
+      - name: Upload artifact (macOS)
+        if: startsWith(matrix.os, 'macos')
+        uses: actions/upload-artifact@v4
+        with:
+          name: MingQingDB-macos
+          path: desktop/dist/MingQingDB-macos.tar.gz
+
+      - name: Upload artifact (Windows)
+        if: startsWith(matrix.os, 'windows')
+        uses: actions/upload-artifact@v4
+        with:
+          name: MingQingDB-windows
+          path: desktop/dist/MingQingDB-windows.zip
+
+      - name: Upload artifact (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        uses: actions/upload-artifact@v4
+        with:
+          name: MingQingDB-linux
+          path: desktop/dist/MingQingDB-linux.tar.gz
+
+  publish:
+    name: Publish GitHub Release
+    runs-on: ubuntu-22.04
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: MingQingDB-*
+          merge-multiple: true
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          shopt -s globstar nullglob
+          mv artifacts/**/MingQingDB-macos.tar.gz release/ 2>/dev/null || true
+          mv artifacts/**/MingQingDB-windows.zip release/ 2>/dev/null || true
+          mv artifacts/**/MingQingDB-linux.tar.gz release/ 2>/dev/null || true
+          cd release
+          sha256sum * > SHA256SUMS.txt
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            release/*
+
+

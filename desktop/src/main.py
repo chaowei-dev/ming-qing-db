@@ -1,14 +1,26 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
 from views.main_window import MainWindow
 from utils.bootstrap import initialize_database_if_needed
 
 
+def _app_root_dir() -> Path:
+    """Return the application root directory for dev and frozen builds.
+
+    - Dev: desktop/ (two levels up from this file)
+    - Frozen (PyInstaller): prefer _MEIPASS if present, otherwise the executable's dir
+    """
+    if getattr(sys, "frozen", False):
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent))
+    return Path(__file__).resolve().parent.parent
+
+
 def _load_qss_if_exists(app: QApplication) -> None:
-    root_dir = Path(__file__).resolve().parent.parent
+    root_dir = _app_root_dir()
     qss_path = root_dir / "resources" / "styles" / "main.qss"
     if qss_path.is_file():
         try:
