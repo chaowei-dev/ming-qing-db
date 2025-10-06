@@ -162,6 +162,23 @@ class CategoryView(QWidget):
         if category_id is None:
             QMessageBox.information(self, "請選擇", "請先選擇一筆資料")
             return
+        # Block deletion if any dependent rows exist (e.g., books referencing this category)
+        try:
+            with self._engine.connect() as conn:
+                cnt = conn.execute(
+                    text("SELECT COUNT(1) FROM books WHERE category_id = :id"),
+                    {"id": category_id},
+                ).scalar_one()
+            if int(cnt) > 0:
+                QMessageBox.warning(
+                    self,
+                    "無法刪除",
+                    f"此類別仍被 {int(cnt)} 本書使用，請先移除或變更關聯。",
+                )
+                return
+        except Exception as exc:
+            QMessageBox.critical(self, "查詢失敗", f"無法檢查相依關係：{exc}")
+            return
         if QMessageBox.question(self, "刪除確認", "確定要刪除此類別？") != QMessageBox.StandardButton.Yes:
             return
         try:
