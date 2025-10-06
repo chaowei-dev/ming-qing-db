@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import List, Dict, Any, Optional
+import csv
 
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant, QSortFilterProxyModel
 from PyQt6.QtWidgets import (
@@ -16,6 +17,7 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
     QCheckBox,
     QHeaderView,
+    QFileDialog,
 )
 
 from models.database import get_engine
@@ -258,6 +260,11 @@ class SearchView(QWidget):
         row5.addSpacing(16)
         row5.addWidget(self._page_info)
         row5.addStretch(1)
+        # Export current page to CSV (rightmost)
+        self._export_btn = QPushButton("下載 CSV", self)
+        self._export_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self._export_btn.clicked.connect(self._export_current_page_csv)
+        row5.addWidget(self._export_btn)
         layout.addLayout(row5)
         layout.addWidget(self._table)
 
@@ -421,6 +428,44 @@ class SearchView(QWidget):
             self._table.scrollToTop()
         except Exception:
             pass
+
+    def _export_current_page_csv(self) -> None:
+        try:
+            model = self._table.model()
+            if model is None:
+                QMessageBox.warning(self, "無資料", "目前沒有可匯出的資料。")
+                return
+            current_display_page = self._current_page + 1
+            default_name = f"entries_page_{current_display_page}.csv"
+            path, _ = QFileDialog.getSaveFileName(
+                self,
+                "匯出目前頁面為 CSV",
+                default_name,
+                "CSV Files (*.csv)"
+            )
+            if not path:
+                return
+            column_count = model.columnCount()
+            headers = [
+                str(model.headerData(c, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole))
+                for c in range(column_count)
+            ]
+            row_count = model.rowCount()
+            with open(path, "w", newline="", encoding="utf-8-sig") as f:
+                writer = csv.writer(f)
+                writer.writerow(headers)
+                for r in range(row_count):
+                    row: List[Any] = []
+                    for c in range(column_count):
+                        idx = model.index(r, c)
+                        val = model.data(idx, Qt.ItemDataRole.DisplayRole)
+                        if val is None:
+                            val = ""
+                        row.append(val)
+                    writer.writerow(row)
+            QMessageBox.information(self, "匯出完成", f"已匯出至：{path}")
+        except Exception as exc:
+            QMessageBox.critical(self, "匯出失敗", f"無法匯出：{exc}")
 
     def _update_nav_state(self) -> None:
         page_size = self._current_page_size()
