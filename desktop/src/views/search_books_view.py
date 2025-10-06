@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Dict, Any, Optional
 
-from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant
+from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QVariant, QSortFilterProxyModel
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -28,6 +28,7 @@ class _BookSearchResultModel(QAbstractTableModel):
         self._rows = rows
         self._row_offset = 0
         self._headers = [
+            ("seq", "序號"),
             ("title", "書名"),
             ("author", "作者"),
             ("version", "版本"),
@@ -45,10 +46,20 @@ class _BookSearchResultModel(QAbstractTableModel):
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:  # type: ignore[override]
         if not index.isValid() or not (0 <= index.row() < len(self._rows)):
             return QVariant()
-        if role not in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
-            return QVariant()
-        key = self._headers[index.column()][0]
-        return self._rows[index.row()].get(key, "")
+        # Display/Edit
+        if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
+            key = self._headers[index.column()][0]
+            if key == "seq":
+                return self._row_offset + index.row() + 1
+            return self._rows[index.row()].get(key, "")
+        # Case-insensitive sort role
+        if role == Qt.ItemDataRole.UserRole:
+            key = self._headers[index.column()][0]
+            if key == "seq":
+                return self._row_offset + index.row() + 1
+            value = self._rows[index.row()].get(key, "")
+            return str(value).lower()
+        return QVariant()
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole):  # type: ignore[override]
         if role != Qt.ItemDataRole.DisplayRole:
@@ -184,11 +195,43 @@ class SearchBookView(QWidget):
         # Results
         self._table = QTableView(self)
         self._model = _BookSearchResultModel([])
-        self._table.setModel(self._model)
+        # Sorting via proxy model
+        self._proxy = QSortFilterProxyModel(self)
+        self._proxy.setSourceModel(self._model)
+        self._proxy.setSortRole(Qt.ItemDataRole.UserRole)
+        self._proxy.setDynamicSortFilter(True)
+        self._table.setModel(self._proxy)
+        self._table.setSortingEnabled(True)
+        # Hide default vertical row numbers; we show our own 序號 column
+        try:
+            self._table.verticalHeader().setVisible(False)
+        except Exception:
+            pass
+        # Presentation: prioritize left columns, enable manual resize, cap widths, elide long text
+        self._table.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self._table.setWordWrap(False)
         header = self._table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setMinimumSectionSize(64)
+        header.setDefaultSectionSize(160)
+        header.setMaximumSectionSize(600)
+        header.setSortIndicatorShown(True)
+        try:
+            self._table.setColumnWidth(0, 80)   # 序號
+            self._table.setColumnWidth(1, 480)  # 書名
+            self._table.setColumnWidth(2, 320)  # 作者
+            self._table.setColumnWidth(3, 180)  # 版本
+            self._table.setColumnWidth(4, 200)  # 來源
+            self._table.setColumnWidth(5, 140)  # 類別
+            self._table.setColumnWidth(6, 220)  # 備註
+        except Exception:
+            pass
+        # Default sort: 序號 由小到大
+        try:
+            self._table.sortByColumn(0, Qt.SortOrder.AscendingOrder)
+            header.setSortIndicator(0, Qt.SortOrder.AscendingOrder)
+        except Exception:
+            pass
 
         layout = QVBoxLayout(self)
         layout.addLayout(row1)
@@ -345,6 +388,13 @@ class SearchBookView(QWidget):
         rows = self._query_results(self._last_filters, page_size, offset)
         self._model.update_rows(rows, row_offset=offset)
         self._update_nav_state()
+        # Enforce default 序號排序 on new searches only
+        if reset_page:
+            try:
+                self._table.sortByColumn(0, Qt.SortOrder.AscendingOrder)
+                self._table.horizontalHeader().setSortIndicator(0, Qt.SortOrder.AscendingOrder)
+            except Exception:
+                pass
         try:
             self._table.scrollToTop()
         except Exception:
