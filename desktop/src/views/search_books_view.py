@@ -26,6 +26,7 @@ class _BookSearchResultModel(QAbstractTableModel):
     def __init__(self, rows: List[Dict[str, Any]]):
         super().__init__()
         self._rows = rows
+        self._row_offset = 0
         self._headers = [
             ("title", "書名"),
             ("author", "作者"),
@@ -54,11 +55,13 @@ class _BookSearchResultModel(QAbstractTableModel):
             return QVariant()
         if orientation == Qt.Orientation.Horizontal:
             return self._headers[section][1]
-        return section + 1
+        # Global row numbering across pages
+        return self._row_offset + section + 1
 
-    def update_rows(self, rows: List[Dict[str, Any]]) -> None:
+    def update_rows(self, rows: List[Dict[str, Any]], row_offset: int = 0) -> None:
         self.beginResetModel()
         self._rows = rows
+        self._row_offset = int(row_offset)
         self.endResetModel()
 
 
@@ -334,8 +337,12 @@ class SearchBookView(QWidget):
         self._total_count = self._count_results(self._last_filters)
         offset = self._current_page * page_size
         rows = self._query_results(self._last_filters, page_size, offset)
-        self._model.update_rows(rows)
+        self._model.update_rows(rows, row_offset=offset)
         self._update_nav_state()
+        try:
+            self._table.scrollToTop()
+        except Exception:
+            pass
 
     def _update_nav_state(self) -> None:
         page_size = self._current_page_size()
