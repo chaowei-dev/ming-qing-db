@@ -2,8 +2,6 @@ from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabe
 from .search_entries_view import SearchView
 from .search_books_view import SearchBookView
 from .category_view import CategoryView
-from .book_view import BookView
-from .entry_view import EntryView
 from .backup_view import BackupView
 
 
@@ -37,17 +35,6 @@ class MainWindow(QMainWindow):
         categories_layout.addWidget(CategoryView(categories_tab))
         self.tab_widget.addTab(categories_tab, "類別")
 
-        # 書籍
-        books_tab = QWidget(self)
-        books_layout = QVBoxLayout(books_tab)
-        books_layout.addWidget(BookView(books_tab))
-        self.tab_widget.addTab(books_tab, "書籍")
-
-        # 篇目
-        entries_tab = QWidget(self)
-        entries_layout = QVBoxLayout(entries_tab)
-        entries_layout.addWidget(EntryView(entries_tab))
-        self.tab_widget.addTab(entries_tab, "篇目")
 
         # 備份（備份按鈕，資料庫版本切換／匯出.csv）
         backup_tab = QWidget(self)
