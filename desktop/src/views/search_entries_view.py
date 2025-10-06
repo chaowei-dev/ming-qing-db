@@ -84,6 +84,12 @@ class SearchView(QWidget):
         self._search_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self._keyword_toggle.toggled.connect(self._on_keyword_toggle)
         self._keyword_toggle.setToolTip("使用全域搜尋模式")
+        # Enter key triggers search
+        self._title_in.returnPressed.connect(self.search)
+        self._author_in.returnPressed.connect(self.search)
+        self._roll_in.returnPressed.connect(self.search)
+        self._entry_in.returnPressed.connect(self.search)
+        self._keyword_in.returnPressed.connect(self.search)
 
         # Pagination controls
         self._page_size_cb = QComboBox(self)
