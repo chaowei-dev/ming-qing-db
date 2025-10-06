@@ -81,6 +81,24 @@ class SearchBookView(QWidget):
         self._keyword_toggle.toggled.connect(self._on_keyword_toggle)
         self._keyword_toggle.setToolTip("使用全域搜尋模式")
 
+        # Pagination controls
+        self._page_size_cb = QComboBox(self)
+        self._page_size_cb.addItems(["100", "500", "1000"])
+        self._page_size_cb.setCurrentText("1000")
+        self._prev_btn = QPushButton("上一頁", self)
+        self._next_btn = QPushButton("下一頁", self)
+        self._page_info = QLabel("", self)
+        self._page_select_cb = QComboBox(self)
+        self._prev_btn.clicked.connect(self._go_prev)
+        self._next_btn.clicked.connect(self._go_next)
+        self._page_size_cb.currentIndexChanged.connect(self._on_page_size_change)
+        self._page_select_cb.currentIndexChanged.connect(self._on_page_select_change)
+
+        # Pagination state
+        self._total_count: int = 0
+        self._current_page: int = 0
+        self._last_filters: Optional[Dict[str, Any]] = None
+
         # Make disabled inputs visually obvious
         self.setStyleSheet(
             "QLineEdit:disabled { background-color: #f2f2f2; color: #888888; }"
@@ -168,10 +186,23 @@ class SearchBookView(QWidget):
         layout.addLayout(row2)
         layout.addLayout(row3)
         layout.addLayout(row4)
+        # Pagination row (每頁/上一頁/下一頁/資訊)
+        row5 = QHBoxLayout()
+        row5.addWidget(QLabel("每頁", self))
+        row5.addWidget(self._page_size_cb)
+        row5.addSpacing(16)
+        row5.addWidget(self._prev_btn)
+        row5.addWidget(self._page_select_cb)
+        row5.addWidget(self._next_btn)
+        row5.addSpacing(16)
+        row5.addWidget(self._page_info)
+        row5.addStretch(1)
+        layout.addLayout(row5)
         layout.addWidget(self._table)
 
         self._keyword_toggle.setChecked(False)
         self._on_keyword_toggle(False)
+        self._update_nav_state()
 
     def _load_categories(self) -> None:
         self._category_cb.clear()
@@ -182,9 +213,16 @@ class SearchBookView(QWidget):
                 d = dict(r._mapping)  # type: ignore[attr-defined]
                 self._category_cb.addItem(d["name"], d["id"])
 
-    def _query_results(self, title: str, author: str, version: str, source: str, keyword: str) -> List[Dict[str, Any]]:
+    def _build_where(self, filters: Dict[str, Any]) -> tuple[str, Dict[str, Any]]:
         text_where: List[str] = []
         params: Dict[str, Any] = {}
+        title = filters.get("title", "")
+        author = filters.get("author", "")
+        version = filters.get("version", "")
+        source = filters.get("source", "")
+        keyword = filters.get("keyword", "")
+        cat_id = filters.get("cat_id", None)
+
         if title:
             text_where.append("b.title LIKE :title")
             params["title"] = f"%{title}%"
@@ -208,18 +246,32 @@ class SearchBookView(QWidget):
             )
             params["kw"] = f"%{keyword}%"
 
-        cat_id = self._category_cb.currentData()
         if cat_id is not None:
             where_parts.append("b.category_id = :cat_id")
             params["cat_id"] = int(cat_id)
 
         clauses = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
+        return clauses, params
+
+    def _count_results(self, filters: Dict[str, Any]) -> int:
+        clauses, params = self._build_where(filters)
+        sql = (
+            "SELECT COUNT(1) AS cnt "
+            "FROM books b LEFT JOIN categories c ON b.category_id = c.id" + clauses
+        )
+        with self._engine.connect() as conn:
+            row = conn.execute(text(sql), params).mappings().first()
+            return int(row["cnt"]) if row is not None else 0
+
+    def _query_results(self, filters: Dict[str, Any], limit: int, offset: int) -> List[Dict[str, Any]]:
+        clauses, params = self._build_where(filters)
+        params = {**params, "limit": int(limit), "offset": int(offset)}
         sql = (
             "SELECT b.title, b.author, b.version, b.source, "
             "COALESCE(c.name, '') AS category_name, "
             "COALESCE(b.remarks, '') AS remarks "
             "FROM books b LEFT JOIN categories c ON b.category_id = c.id" + clauses + " "
-            "ORDER BY b.title, b.author, b.version, b.source LIMIT 1000"
+            "ORDER BY b.title, b.author, b.version, b.source LIMIT :limit OFFSET :offset"
         )
         with self._engine.connect() as conn:
             rows = [dict(r._mapping) for r in conn.execute(text(sql), params)]  # type: ignore[attr-defined]
@@ -247,15 +299,113 @@ class SearchBookView(QWidget):
 
     def search(self) -> None:
         try:
-            title = self._title_in.text().strip() if self._title_in.isEnabled() else ""
-            author = self._author_in.text().strip() if self._author_in.isEnabled() else ""
-            version = self._version_in.text().strip() if self._version_in.isEnabled() else ""
-            source = self._source_in.text().strip() if self._source_in.isEnabled() else ""
-            keyword = self._keyword_in.text().strip() if self._keyword_in.isEnabled() else ""
-
-            rows = self._query_results(title, author, version, source, keyword)
-            self._model.update_rows(rows)
+            self._run_search(reset_page=True)
         except Exception as exc:
             QMessageBox.critical(self, "搜尋失敗", f"無法搜尋：{exc}")
+
+    def _collect_filters(self) -> Dict[str, Any]:
+        title = self._title_in.text().strip() if self._title_in.isEnabled() else ""
+        author = self._author_in.text().strip() if self._author_in.isEnabled() else ""
+        version = self._version_in.text().strip() if self._version_in.isEnabled() else ""
+        source = self._source_in.text().strip() if self._source_in.isEnabled() else ""
+        keyword = self._keyword_in.text().strip() if self._keyword_in.isEnabled() else ""
+        cat_id = self._category_cb.currentData()
+        return {
+            "title": title,
+            "author": author,
+            "version": version,
+            "source": source,
+            "keyword": keyword,
+            "cat_id": cat_id,
+        }
+
+    def _current_page_size(self) -> int:
+        try:
+            return int(self._page_size_cb.currentText())
+        except Exception:
+            return 100
+
+    def _run_search(self, reset_page: bool) -> None:
+        if reset_page or self._last_filters is None:
+            self._last_filters = self._collect_filters()
+            self._current_page = 0
+        assert self._last_filters is not None
+        page_size = self._current_page_size()
+        self._total_count = self._count_results(self._last_filters)
+        offset = self._current_page * page_size
+        rows = self._query_results(self._last_filters, page_size, offset)
+        self._model.update_rows(rows)
+        self._update_nav_state()
+
+    def _update_nav_state(self) -> None:
+        page_size = self._current_page_size()
+        total = self._total_count
+        if total <= 0:
+            self._page_info.setText("共 0 筆")
+            self._prev_btn.setEnabled(False)
+            self._next_btn.setEnabled(False)
+            self._page_select_cb.blockSignals(True)
+            self._page_select_cb.clear()
+            self._page_select_cb.blockSignals(False)
+            self._page_select_cb.setEnabled(False)
+            return
+        total_pages = (total + page_size - 1) // page_size
+        current_display_page = self._current_page + 1
+        start = self._current_page * page_size + 1
+        end = min(total, (self._current_page + 1) * page_size)
+        self._page_info.setText(f"第 {current_display_page}/{total_pages} 頁（顯示 {start}-{end} / 共 {total} 筆）")
+        self._prev_btn.setEnabled(self._current_page > 0)
+        self._next_btn.setEnabled(self._current_page + 1 < total_pages)
+        # Populate page selector without triggering change handler
+        self._page_select_cb.blockSignals(True)
+        self._page_select_cb.setEnabled(True)
+        # Only rebuild items if count differs (avoid flicker)
+        if self._page_select_cb.count() != total_pages:
+            self._page_select_cb.clear()
+            for i in range(1, total_pages + 1):
+                self._page_select_cb.addItem(str(i))
+        # Sync current index to current page (0-based)
+        if 0 <= self._current_page < total_pages:
+            self._page_select_cb.setCurrentIndex(self._current_page)
+        self._page_select_cb.blockSignals(False)
+
+    def _on_page_size_change(self) -> None:
+        try:
+            self._run_search(reset_page=True)
+        except Exception as exc:
+            QMessageBox.critical(self, "分頁變更失敗", f"無法變更每頁筆數：{exc}")
+
+    def _go_prev(self) -> None:
+        if self._current_page <= 0:
+            return
+        self._current_page -= 1
+        try:
+            self._run_search(reset_page=False)
+        except Exception as exc:
+            QMessageBox.critical(self, "分頁失敗", f"無法前往上一頁：{exc}")
+
+    def _go_next(self) -> None:
+        page_size = self._current_page_size()
+        total_pages = (self._total_count + page_size - 1) // page_size
+        if self._current_page + 1 >= total_pages:
+            return
+        self._current_page += 1
+        try:
+            self._run_search(reset_page=False)
+        except Exception as exc:
+            QMessageBox.critical(self, "分頁失敗", f"無法前往下一頁：{exc}")
+
+    def _on_page_select_change(self) -> None:
+        # Jump to selected page (combo is 1-based display, 0-based index)
+        index = self._page_select_cb.currentIndex()
+        if index < 0:
+            return
+        if index == self._current_page:
+            return
+        self._current_page = index
+        try:
+            self._run_search(reset_page=False)
+        except Exception as exc:
+            QMessageBox.critical(self, "分頁失敗", f"無法跳轉頁面：{exc}")
 
 
