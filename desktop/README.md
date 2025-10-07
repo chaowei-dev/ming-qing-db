@@ -327,7 +327,7 @@ python -m pytest --cov=src tests/
 ./package-mac.sh
 
 # Windows（PowerShell）
-pwsh -File ./package-win.ps1
+pwsh -File ./package-win.ps1 -UseSystemPython
 ```
 
 打包輸出目錄：`desktop/dist/MingQingDB/`
