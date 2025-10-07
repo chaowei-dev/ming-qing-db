@@ -1,0 +1,50 @@
+/* Minimal base styles; refined for larger, more readable UI */
+
+/* Global font scaling */
+* {
+    font-size: 16px;
+}
+
+QMainWindow {
+    background: #f9f9fb;
+}
+
+QTabWidget::pane {
+    border: 1px solid #d0d5dd;
+    background: white;
+}
+
+QTabBar::tab {
+    padding: 8px 14px;
+    font-size: 15px;
+}
+
+QStatusBar {
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Make tables and headers more touch-friendly */
+QTableView::item {
+    padding: 6px 8px;
+}
+
+QHeaderView::section {
+    font-size: 15px;
+    padding: 8px 10px;
+}
+
+/* Common controls */
+QPushButton {
+    padding: 6px 12px;
+    font-size: 15px;
+}
+
+QLineEdit {
+    padding: 6px 8px;
+    font-size: 15px;
+}
+
+QLabel {
+    font-size: 15px;
+}
